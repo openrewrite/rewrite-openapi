@@ -45,7 +45,6 @@ description: Converts the @ApiOperation annotation to @Operation and converts th
   and removes the others.
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
   - org.openrewrite.java.ChangeType:
@@ -77,7 +76,6 @@ description: Changes the namespace of the @ApiResponses and @ApiResponse annotat
   (ex. code -> responseCode, message -> description).
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
   - org.openrewrite.java.ChangeType:
@@ -104,7 +102,6 @@ description: Converts @ApiImplicitParams to @Parameters and the @ApiImplicitPara
   the directly mappable attributes and removes the others.
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
   - org.openrewrite.java.ChangeType:
@@ -134,7 +131,6 @@ displayName: Migrate from @Api  to @Tag
 description: Converts @Api to @Tag annotation and converts the directly mappable attributes and removes the others.
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
   - org.openrewrite.java.ChangeAnnotationAttributeName:
@@ -152,7 +148,6 @@ displayName: Migrate from @ApiParam to @Parameter
 description: Converts the @ApiParam annotation to @Parameter and converts the directly mappable attributes.
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
   - org.openrewrite.java.ChangeType:
@@ -170,7 +165,6 @@ displayName: Migrate from @ApiModelProperty to @Schema
 description: Converts the @ApiModelProperty annotation to @Schema and converts the "value" attribute to "description".
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
   - org.openrewrite.java.ChangeType:
