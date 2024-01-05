@@ -15,7 +15,7 @@
  */
 @NonNullApi
 @NonNullFields
-package org.openrewrite.openapi;
+package org.openrewrite.openapi.swagger;
 
 import org.openrewrite.internal.lang.NonNullApi;
 import org.openrewrite.internal.lang.NonNullFields;

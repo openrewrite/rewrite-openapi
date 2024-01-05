@@ -1,0 +1,182 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.Swagger2ToOpenApiV3Migration
+displayName: Swagger 2 to OpenAPI 3 Migration
+description: Runs a series of recipes to migrate applications from Swagger to SpringDoc OpenAPI.
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.spring.DeleteSpringProperty:
+      propertyKey: swagger.title
+  - org.openrewrite.java.spring.DeleteSpringProperty:
+      propertyKey: swagger.description
+  - org.openrewrite.java.spring.DeleteSpringProperty:
+      propertyKey: swagger.contact
+  - org.openrewrite.maven.RemoveDependency:
+      groupId: org.springdoc
+      artifactId: springdoc-openapi-webmvc-core
+  - org.openrewrite.maven.RemoveDependency:
+      groupId: io.swagger.core.v3
+      artifactId: swagger-annotations
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.springdoc.core.customizers.OpenApiCustomiser
+      newFullyQualifiedTypeName: org.springdoc.core.customizers.OpenApiCustomizer
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.Tag
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
+  - org.openrewrite.openapi.MigrateApiOperationToOperation
+  - org.openrewrite.openapi.MigrateApiResponsesToApiResponses
+  - org.openrewrite.openapi.MigrateApiImplicitParamsToParameters
+  - org.openrewrite.openapi.MigrateApiToTag
+  - org.openrewrite.openapi.MigrateApiParamToParameter
+  - org.openrewrite.openapi.MigrateApiModelPropertyToSchema
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiModel
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.media.Schema
+
+# todo add swagger-core to common-dependencies
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.MigrateApiOperationToOperation
+displayName: Migrate from @ApiOperation to @Operation
+description: Converts the @ApiOperation annotation to @Operation and converts the directly mappable attributes
+  and removes the others.
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiOperation
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Operation
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      oldAttributeName: "notes"
+      newAttributeName: "description"
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      oldAttributeName: "value"
+      newAttributeName: "summary"
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      attributeName: response
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      attributeName: consumes
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      attributeName: produces
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.MigrateApiResponsesToApiResponses
+displayName: Migrate from @ApiResponses to @ApiResponses
+description: Changes the namespace of the @ApiResponses and @ApiResponse annotations and converts its attributes
+  (ex. code -> responseCode, message -> description).
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiResponses
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.responses.ApiResponses
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiResponse
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.responses.ApiResponse
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.responses.ApiResponse
+      oldAttributeName: "code"
+      newAttributeName: "responseCode"
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.responses.ApiResponse
+      oldAttributeName: "message"
+      newAttributeName: "description"
+  - org.openrewrite.openapi.swagger.ConvertApiResponseCodesToStrings
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.MigrateApiImplicitParamsToParameters
+displayName: Migrate from @ApiImplicitParams  to @Parameters
+description: Converts @ApiImplicitParams to @Parameters and the @ApiImplicitParam annotation to @Parameter and converts
+  the directly mappable attributes and removes the others.
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiImplicitParams
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Parameters
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiImplicitParam
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Parameter
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      oldAttributeName: "value"
+      newAttributeName: "description"
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      attributeName: dataType
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      attributeName: paramType
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      attributeName: allowMultiple
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.MigrateApiToTag
+displayName: Migrate from @Api  to @Tag
+description: Converts @Api to @Tag annotation and converts the directly mappable attributes and removes the others.
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.annotations.Api
+      oldAttributeName: "value"
+      newAttributeName: "name"
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.Api
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.MigrateApiParamToParameter
+displayName: Migrate from @ApiParam to @Parameter
+description: Converts the @ApiParam annotation to @Parameter and converts the directly mappable attributes.
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiParam
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Parameter
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      oldAttributeName: "value"
+      newAttributeName: "description"
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.MigrateApiModelPropertyToSchema
+displayName: Migrate from @ApiModelProperty to @Schema
+description: Converts the @ApiModelProperty annotation to @Schema and converts the "value" attribute to "description".
+tags:
+  - swagger
+  - springdoc
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiModelProperty
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.media.Schema
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.media.Schema
+      oldAttributeName: "value"
+      newAttributeName: "description"
