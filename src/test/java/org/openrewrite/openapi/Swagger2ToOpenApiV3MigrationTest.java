@@ -16,6 +16,7 @@
 package org.openrewrite.openapi;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
@@ -24,7 +25,11 @@ class Swagger2ToOpenApiV3MigrationTest implements RewriteTest {
     @Test
     void swagger2ToOpenApiV3() {
         rewriteRun(
-          spec -> spec.recipeFromResources("org.openrewrite.openapi.Swagger2ToOpenApiV3Migration"),
+          spec -> spec.recipeFromResources("org.openrewrite.openapi.Swagger2ToOpenApiV3Migration")
+//            .parser(JavaParser.fromJavaVersion().classpath(
+//              "swagger-parser-1.0.0.jar",
+//              "swagger-annotations-1.0.0.jar"))
+          ,
           //language=java
           java( // TODO Add old swagger elements
             """

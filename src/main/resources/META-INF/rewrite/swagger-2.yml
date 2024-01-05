@@ -15,29 +15,15 @@
 #
 
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.Swagger2ToOpenApiV3Migration
-displayName: Swagger 2 to OpenAPI 3 Migration
-description: Runs a series of recipes to migrate applications from Swagger to SpringDoc OpenAPI.
+name: org.openrewrite.openapi.SwaggerToOpenAPI
+displayName: Migrate from Swagger to OpenAPI
+description: Migrate from Swagger to OpenAPI.
 tags:
   - swagger
-  - springdoc
   - openapi
 recipeList:
-  - org.openrewrite.java.spring.DeleteSpringProperty:
-      propertyKey: swagger.title
-  - org.openrewrite.java.spring.DeleteSpringProperty:
-      propertyKey: swagger.description
-  - org.openrewrite.java.spring.DeleteSpringProperty:
-      propertyKey: swagger.contact
-  - org.openrewrite.maven.RemoveDependency:
-      groupId: org.springdoc
-      artifactId: springdoc-openapi-webmvc-core
-  - org.openrewrite.maven.RemoveDependency:
-      groupId: io.swagger.core.v3
-      artifactId: swagger-annotations
-  - org.openrewrite.java.ChangeType:
-      oldFullyQualifiedTypeName: org.springdoc.core.customizers.OpenApiCustomiser
-      newFullyQualifiedTypeName: org.springdoc.core.customizers.OpenApiCustomizer
+  # https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations
+  # https://springdoc.org/#migrating-from-springfox
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.Tag
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
@@ -143,7 +129,7 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.MigrateApiToTag
-displayName: Migrate from @Api  to @Tag
+displayName: Migrate from @Api to @Tag
 description: Converts @Api to @Tag annotation and converts the directly mappable attributes and removes the others.
 tags:
   - swagger
