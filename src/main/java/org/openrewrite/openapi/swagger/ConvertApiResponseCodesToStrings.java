@@ -16,11 +16,21 @@
 package org.openrewrite.openapi.swagger;
 
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
+import org.openrewrite.internal.ListUtils;
+import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.search.UsesType;
+import org.openrewrite.java.tree.Expression;
+import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 
 public class ConvertApiResponseCodesToStrings extends Recipe {
+
+    private static final AnnotationMatcher ANNOTATION_MATCHER = new AnnotationMatcher("@io.swagger.v3.oas.annotations.responses.ApiResponse");
+
     @Override
     public String getDisplayName() {
         return "Convert API response codes to strings";
@@ -33,8 +43,40 @@ public class ConvertApiResponseCodesToStrings extends Recipe {
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
-        return new JavaIsoVisitor<ExecutionContext>(){
-        // TODO: implement
-        };
+        // https://docs.swagger.io/swagger-core/v1.5.0/apidocs/io/swagger/annotations/ApiResponse.html
+        // https://docs.swagger.io/swagger-core/v2.0.0/apidocs/io/swagger/v3/oas/annotations/responses/ApiResponse.html
+        return Preconditions.check(
+                new UsesType<>("io.swagger.v3.oas.annotations.responses.ApiResponse", true),
+                new JavaIsoVisitor<ExecutionContext>() {
+                    @Override
+                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                        J.Annotation an = super.visitAnnotation(annotation, ctx);
+                        if (ANNOTATION_MATCHER.matches(an)) {
+                            return an.withArguments(ListUtils.map(an.getArguments(), this::maybeReplaceResponseCodeTypeAndValue));
+                        }
+                        return an;
+                    }
+
+                    private Expression maybeReplaceResponseCodeTypeAndValue(Expression arg) {
+                        if (arg instanceof J.Assignment) {
+                            J.Assignment assignment = (J.Assignment) arg;
+                            boolean matchesField = assignment.getVariable() instanceof J.Identifier &&
+                                                   "responseCode".equals(((J.Identifier) assignment.getVariable()).getSimpleName());
+                            boolean usesNumberLiteral = assignment.getAssignment() instanceof J.Literal &&
+                                                        ((J.Literal) assignment.getAssignment()).getValue() instanceof Number;
+                            if (matchesField && usesNumberLiteral) {
+                                J.Literal assignedLiteral = (J.Literal) assignment.getAssignment();
+                                return assignment
+                                        .withType(JavaType.Primitive.String)
+                                        .withAssignment(assignedLiteral
+                                                .withValue(String.valueOf(assignedLiteral.getValue()))
+                                                .withValueSource("\"" + assignedLiteral.getValue() + "\"")
+                                                .withType(JavaType.Primitive.String));
+                            }
+                        }
+                        return arg;
+                    }
+                }
+        );
     }
 }
