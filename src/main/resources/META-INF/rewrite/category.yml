@@ -18,4 +18,9 @@
 type: specs.openrewrite.org/v1beta/category
 name: OpenAPI
 packageName: org.openrewrite.openapi
-description: Recipes to perform [OpenAPI](https://openapi.com/) migration tasks.
+description: Recipes to perform [OpenAPI](https://www.openapis.org/) migration tasks.
+---
+type: specs.openrewrite.org/v1beta/category
+name: Swagger
+packageName: org.openrewrite.openapi.swagger
+description: Recipes to perform [Swagger](https://swagger.io/) migration tasks.
