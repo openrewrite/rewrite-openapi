@@ -15,7 +15,7 @@
 #
 
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.SwaggerToOpenAPI
+name: org.openrewrite.openapi.swagger.SwaggerToOpenAPI
 displayName: Migrate from Swagger to OpenAPI
 description: Migrate from Swagger to OpenAPI.
 tags:
@@ -27,12 +27,12 @@ recipeList:
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.Tag
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
-  - org.openrewrite.openapi.MigrateApiOperationToOperation
-  - org.openrewrite.openapi.MigrateApiResponsesToApiResponses
-  - org.openrewrite.openapi.MigrateApiImplicitParamsToParameters
-  - org.openrewrite.openapi.MigrateApiToTag
-  - org.openrewrite.openapi.MigrateApiParamToParameter
-  - org.openrewrite.openapi.MigrateApiModelPropertyToSchema
+  - org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
+  - org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
+  - org.openrewrite.openapi.swagger.MigrateApiImplicitParamsToParameters
+  - org.openrewrite.openapi.swagger.MigrateApiToTag
+  - org.openrewrite.openapi.swagger.MigrateApiParamToParameter
+  - org.openrewrite.openapi.swagger.MigrateApiModelPropertyToSchema
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.ApiModel
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.media.Schema
@@ -41,7 +41,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.MigrateApiOperationToOperation
+name: org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
 displayName: Migrate from @ApiOperation to @Operation
 description: Converts the @ApiOperation annotation to @Operation and converts the directly mappable attributes
   and removes the others.
@@ -72,7 +72,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.MigrateApiResponsesToApiResponses
+name: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
 displayName: Migrate from @ApiResponses to @ApiResponses
 description: Changes the namespace of the @ApiResponses and @ApiResponse annotations and converts its attributes
   (ex. code -> responseCode, message -> description).
@@ -98,7 +98,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.MigrateApiImplicitParamsToParameters
+name: org.openrewrite.openapi.swagger.MigrateApiImplicitParamsToParameters
 displayName: Migrate from @ApiImplicitParams  to @Parameters
 description: Converts @ApiImplicitParams to @Parameters and the @ApiImplicitParam annotation to @Parameter and converts
   the directly mappable attributes and removes the others.
@@ -128,7 +128,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.MigrateApiToTag
+name: org.openrewrite.openapi.swagger.MigrateApiToTag
 displayName: Migrate from @Api to @Tag
 description: Converts @Api to @Tag annotation and converts the directly mappable attributes and removes the others.
 tags:
@@ -145,7 +145,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.MigrateApiParamToParameter
+name: org.openrewrite.openapi.swagger.MigrateApiParamToParameter
 displayName: Migrate from @ApiParam to @Parameter
 description: Converts the @ApiParam annotation to @Parameter and converts the directly mappable attributes.
 tags:
@@ -162,7 +162,7 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.MigrateApiModelPropertyToSchema
+name: org.openrewrite.openapi.swagger.MigrateApiModelPropertyToSchema
 displayName: Migrate from @ApiModelProperty to @Schema
 description: Converts the @ApiModelProperty annotation to @Schema and converts the "value" attribute to "description".
 tags:
