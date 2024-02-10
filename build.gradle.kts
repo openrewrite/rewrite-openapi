@@ -18,5 +18,8 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
+    testRuntimeOnly("io.swagger:swagger-annotations:1.6.13")
+    testRuntimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
+
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
 }
