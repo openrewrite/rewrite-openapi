@@ -37,6 +37,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
+    @DocumentExample
     @Test
     void shouldChangeSwaggerArtifacts() {
         rewriteRun(
