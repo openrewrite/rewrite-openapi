@@ -27,19 +27,16 @@ recipeList:
       oldGroupId: io.swagger
       oldArtifactId: swagger-annotations
       newGroupId: io.swagger.core.v3
-      newArtifactId: swagger-annotations
       newVersion: 2.2.x
   - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
       oldGroupId: io.swagger
       oldArtifactId: swagger-core
       newGroupId: io.swagger.core.v3
-      newArtifactId: swagger-core
       newVersion: 2.2.x
   - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
       oldGroupId: io.swagger
       oldArtifactId: swagger-models
       newGroupId: io.swagger.core.v3
-      newArtifactId: swagger-models
       newVersion: 2.2.x
   # https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations
   # https://springdoc.org/#migrating-from-springfox
