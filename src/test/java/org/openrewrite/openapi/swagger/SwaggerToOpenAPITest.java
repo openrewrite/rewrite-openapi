@@ -16,9 +16,13 @@
 package org.openrewrite.openapi.swagger;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
+
+import static org.openrewrite.java.Assertions.java;
+import static org.openrewrite.maven.Assertions.pomXml;
 
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
@@ -32,5 +36,82 @@ class SwaggerToOpenAPITest implements RewriteTest {
         rewriteRun(
           spec-> spec.printRecipe(() -> System.out::println)
         );
+    }
+
+    @DocumentExample
+    @Test
+    void shouldChangeSwaggerArtifacts() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+            package example.org;
+            
+            import io.swagger.annotations.ApiModel;
+
+            @ApiModel
+            class Example { }
+            """,
+            """
+            package example.org;
+            
+            import io.swagger.v3.oas.annotations.media.Schema;
+
+            @Schema
+            class Example { }
+            """
+          ),
+          //language=xml
+          pomXml(
+            """
+              <project>
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>com.example</groupId>
+                <artifactId>demo</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <dependencies>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                    <version>1.6.14</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-models</artifactId>
+                    <version>1.6.14</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-core</artifactId>
+                    <version>1.6.14</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """,
+            """
+              <project>
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>com.example</groupId>
+                <artifactId>demo</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <dependencies>
+                  <dependency>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                    <version>2.2.21</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-models</artifactId>
+                    <version>2.2.21</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-core</artifactId>
+                    <version>2.2.21</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """));
     }
 }
