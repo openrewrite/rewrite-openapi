@@ -23,17 +23,17 @@ tags:
   - openapi
 recipeList:
   # Relocated artifacts https://mvnrepository.com/artifact/io.swagger
-  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+  - org.openrewrite.java.dependencies.ChangeDependencyGroupIdAndArtifactId:
       oldGroupId: io.swagger
       oldArtifactId: swagger-annotations
       newGroupId: io.swagger.core.v3
       newVersion: 2.2.x
-  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+  - org.openrewrite.java.dependencies.ChangeDependencyGroupIdAndArtifactId:
       oldGroupId: io.swagger
       oldArtifactId: swagger-core
       newGroupId: io.swagger.core.v3
       newVersion: 2.2.x
-  - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
+  - org.openrewrite.java.dependencies.ChangeDependencyGroupIdAndArtifactId:
       oldGroupId: io.swagger
       oldArtifactId: swagger-models
       newGroupId: io.swagger.core.v3

@@ -48,7 +48,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
             package example.org;
             
             import io.swagger.annotations.ApiModel;
-
+            
             @ApiModel
             class Example { }
             """,
@@ -56,7 +56,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
             package example.org;
             
             import io.swagger.v3.oas.annotations.media.Schema;
-
+            
             @Schema
             class Example { }
             """
