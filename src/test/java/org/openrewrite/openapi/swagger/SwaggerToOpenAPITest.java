@@ -21,6 +21,8 @@ import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.util.regex.Pattern;
+
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.maven.Assertions.pomXml;
 
@@ -34,7 +36,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Test
     void loadYamlRecipesToTriggerValidation() {
         rewriteRun(
-          spec-> spec.printRecipe(() -> System.out::println)
+          spec -> spec.printRecipe(() -> System.out::println)
         );
     }
 
@@ -45,21 +47,21 @@ class SwaggerToOpenAPITest implements RewriteTest {
           //language=java
           java(
             """
-            package example.org;
-            
-            import io.swagger.annotations.ApiModel;
-            
-            @ApiModel
-            class Example { }
-            """,
+              package example.org;
+                          
+              import io.swagger.annotations.ApiModel;
+                          
+              @ApiModel
+              class Example { }
+              """,
             """
-            package example.org;
-            
-            import io.swagger.v3.oas.annotations.media.Schema;
-            
-            @Schema
-            class Example { }
-            """
+              package example.org;
+                          
+              import io.swagger.v3.oas.annotations.media.Schema;
+                          
+              @Schema
+              class Example { }
+              """
           ),
           //language=xml
           pomXml(
@@ -88,7 +90,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
                 </dependencies>
               </project>
               """,
-            """
+            after -> after.after(actual -> """
               <project>
                 <modelVersion>4.0.0</modelVersion>
                 <groupId>com.example</groupId>
@@ -98,20 +100,27 @@ class SwaggerToOpenAPITest implements RewriteTest {
                   <dependency>
                     <groupId>io.swagger.core.v3</groupId>
                     <artifactId>swagger-annotations</artifactId>
-                    <version>2.2.21</version>
+                    <version>%1$s</version>
                   </dependency>
                   <dependency>
                     <groupId>io.swagger.core.v3</groupId>
                     <artifactId>swagger-models</artifactId>
-                    <version>2.2.21</version>
+                    <version>%1$s</version>
                   </dependency>
                   <dependency>
                     <groupId>io.swagger.core.v3</groupId>
                     <artifactId>swagger-core</artifactId>
-                    <version>2.2.21</version>
+                    <version>%1$s</version>
                   </dependency>
                 </dependencies>
               </project>
-              """));
+              """.formatted(Pattern.compile("<version>(2\\.2\\.[\\d.]+)</version>")
+              .matcher(actual)
+              .results()
+              .findFirst()
+              .get()
+              .group(1)))
+          )
+        );
     }
 }
