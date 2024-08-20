@@ -81,31 +81,31 @@ recipeList:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-integration
       newArtifactId: swagger-integration-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-jaxrs2
       newArtifactId: swagger-jaxrs2-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-jaxrs2-servlet-initializer
       newArtifactId: swagger-jaxrs2-servlet-initializer-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-jaxrs2-servlet-initializer-v2
       newArtifactId: swagger-jaxrs2-servlet-initializer-v2-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-maven-plugin
       newArtifactId: swagger-maven-plugin-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-models
       newArtifactId: swagger-models-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-project
       newArtifactId: swagger-project-jakarta
-- org.openrewrite.java.dependencies.ChangeDependency:
+  - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-annotations
       newArtifactId: swagger-annotations-jakarta
