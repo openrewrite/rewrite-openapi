@@ -57,6 +57,57 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.swagger.UseJakartaSwaggerArtifacts
+displayName: Use Jakarta Swagger Artifacts
+description: Migrate from javax Swagger artifacts to Jakarta versions.
+tags:
+  - swagger
+  - openapi
+  - jakarta
+recipeList:
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-annotations
+      newArtifactId: swagger-annotations-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-core
+      newArtifactId: swagger-core-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-gradle-plugin
+      newArtifactId: swagger-gradle-plugin-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-integration
+      newArtifactId: swagger-integration-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-jaxrs2
+      newArtifactId: swagger-jaxrs2-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-jaxrs2-servlet-initializer
+      newArtifactId: swagger-jaxrs2-servlet-initializer-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-jaxrs2-servlet-initializer-v2
+      newArtifactId: swagger-jaxrs2-servlet-initializer-v2-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-maven-plugin
+      newArtifactId: swagger-maven-plugin-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-models
+      newArtifactId: swagger-models-jakarta
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-project
+      newArtifactId: swagger-project-jakarta
+
+---
+type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
 displayName: Migrate from @ApiOperation to @Operation
 description: Converts the @ApiOperation annotation to @Operation and converts the directly mappable attributes
