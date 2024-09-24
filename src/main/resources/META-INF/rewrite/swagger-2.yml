@@ -224,10 +224,6 @@ recipeList:
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Parameter
   - org.openrewrite.java.ChangeAnnotationAttributeName:
       annotationType: io.swagger.v3.oas.annotations.Parameter
-      oldAttributeName: "description"
-      newAttributeName: "title"
-  - org.openrewrite.java.ChangeAnnotationAttributeName:
-      annotationType: io.swagger.v3.oas.annotations.Parameter
       oldAttributeName: "value"
       newAttributeName: "description"
 
@@ -243,6 +239,10 @@ recipeList:
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.ApiModelProperty
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.media.Schema
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      oldAttributeName: "description"
+      newAttributeName: "title"
   - org.openrewrite.java.ChangeAnnotationAttributeName:
       annotationType: io.swagger.v3.oas.annotations.media.Schema
       oldAttributeName: "value"
