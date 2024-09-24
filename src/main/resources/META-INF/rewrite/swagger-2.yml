@@ -224,6 +224,10 @@ recipeList:
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Parameter
   - org.openrewrite.java.ChangeAnnotationAttributeName:
       annotationType: io.swagger.v3.oas.annotations.Parameter
+      oldAttributeName: "description"
+      newAttributeName: "title"
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
       oldAttributeName: "value"
       newAttributeName: "description"
 
