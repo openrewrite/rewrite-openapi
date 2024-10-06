@@ -48,10 +48,10 @@ class SwaggerToOpenAPITest implements RewriteTest {
           java(
             """
               package example.org;
-                          
+              
               import io.swagger.annotations.ApiModel;
               import io.swagger.annotations.ApiModelProperty;
-                          
+              
               @ApiModel(value="ApiModelExampleValue", description="ApiModelExampleDescription")
               class Example {
                 @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
@@ -60,9 +60,9 @@ class SwaggerToOpenAPITest implements RewriteTest {
               """,
             """
               package example.org;
-                          
+              
               import io.swagger.v3.oas.annotations.media.Schema;
-                          
+              
               @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
               class Example {
                 @Schema(description = "ApiModelPropertyExampleValue")
