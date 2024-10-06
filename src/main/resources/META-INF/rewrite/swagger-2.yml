@@ -107,8 +107,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
-displayName: Migrate from @ApiOperation to @Operation
-description: Converts the @ApiOperation annotation to @Operation and converts the directly mappable attributes
+displayName: Migrate from `@ApiOperation` to `@Operation`
+description: Converts the `@ApiOperation` annotation to `@Operation` and converts the directly mappable attributes
   and removes the others.
 tags:
   - swagger
@@ -138,8 +138,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
-displayName: Migrate from @ApiResponses to @ApiResponses
-description: Changes the namespace of the @ApiResponses and @ApiResponse annotations and converts its attributes
+displayName: Migrate from `@ApiResponses` to `@ApiResponses`
+description: Changes the namespace of the `@ApiResponses` and `@ApiResponse` annotations and converts its attributes
   (ex. code -> responseCode, message -> description).
 tags:
   - swagger
@@ -164,8 +164,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiImplicitParamsToParameters
-displayName: Migrate from @ApiImplicitParams  to @Parameters
-description: Converts @ApiImplicitParams to @Parameters and the @ApiImplicitParam annotation to @Parameter and converts
+displayName: Migrate from `@ApiImplicitParams`  to `@Parameters`
+description: Converts `@ApiImplicitParams` to `@Parameters` and the `@ApiImplicitParam` annotation to `@Parameter` and converts
   the directly mappable attributes and removes the others.
 tags:
   - swagger
@@ -194,8 +194,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiToTag
-displayName: Migrate from @Api to @Tag
-description: Converts @Api to @Tag annotation and converts the directly mappable attributes and removes the others.
+displayName: Migrate from `@Api` to `@Tag`
+description: Converts `@Api` to `@Tag` annotation and converts the directly mappable attributes and removes the others.
 tags:
   - swagger
   - openapi
@@ -211,8 +211,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiParamToParameter
-displayName: Migrate from @ApiParam to @Parameter
-description: Converts the @ApiParam annotation to @Parameter and converts the directly mappable attributes.
+displayName: Migrate from `@ApiParam` to `@Parameter`
+description: Converts the `@ApiParam` annotation to `@Parameter` and converts the directly mappable attributes.
 tags:
   - swagger
   - openapi
@@ -228,8 +228,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiModelPropertyToSchema
-displayName: Migrate from @ApiModelProperty to @Schema
-description: Converts the @ApiModelProperty annotation to @Schema and converts the "value" attribute to "description".
+displayName: Migrate from `@ApiModelProperty` to `@Schema`
+description: Converts the `@ApiModelProperty` annotation to `@Schema` and converts the "value" attribute to "description".
 tags:
   - swagger
   - openapi
@@ -252,8 +252,8 @@ recipeList:
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiModelToSchema
-displayName: Migrate from @ApiModel to @Schema
-description: Converts the @ApiModel annotation to @Schema and converts the "value" attribute to "name".
+displayName: Migrate from `@ApiModel` to `@Schema`
+description: Converts the `@ApiModel` annotation to `@Schema` and converts the "value" attribute to "name".
 tags:
   - swagger
   - openapi
