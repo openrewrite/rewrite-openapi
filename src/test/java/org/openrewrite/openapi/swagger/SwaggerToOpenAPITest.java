@@ -48,19 +48,26 @@ class SwaggerToOpenAPITest implements RewriteTest {
           java(
             """
               package example.org;
-                          
+              
               import io.swagger.annotations.ApiModel;
-                          
-              @ApiModel
-              class Example { }
+              import io.swagger.annotations.ApiModelProperty;
+              
+              @ApiModel(value="ApiModelExampleValue", description="ApiModelExampleDescription")
+              class Example {
+                @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
+                private String example;
+              }
               """,
             """
               package example.org;
-                          
+              
               import io.swagger.v3.oas.annotations.media.Schema;
-                          
-              @Schema
-              class Example { }
+              
+              @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
+              class Example {
+                @Schema(description = "ApiModelPropertyExampleValue")
+                private String example;
+              }
               """
           ),
           //language=xml
