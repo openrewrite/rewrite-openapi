@@ -239,10 +239,6 @@ recipeList:
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.media.Schema
   - org.openrewrite.java.ChangeAnnotationAttributeName:
       annotationType: io.swagger.v3.oas.annotations.media.Schema
-      oldAttributeName: "description"
-      newAttributeName: "title"
-  - org.openrewrite.java.ChangeAnnotationAttributeName:
-      annotationType: io.swagger.v3.oas.annotations.media.Schema
       oldAttributeName: "value"
       newAttributeName: "description"
   - org.openrewrite.java.RemoveAnnotationAttribute:
