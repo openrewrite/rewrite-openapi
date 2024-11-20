@@ -29,8 +29,9 @@ public class MigrateSpringdocCommonTest implements RewriteTest {
           .parser(JavaParser.fromJavaVersion().classpath(
             "springdoc-openapi-common-1.+",
             "swagger-models-2.+"
-        ));
+          ));
     }
+
     @Test
     public void fixCustomiserAndGroupedOpenApi() {
         // language=java
