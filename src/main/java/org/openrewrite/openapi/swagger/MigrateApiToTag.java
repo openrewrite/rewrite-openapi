@@ -15,10 +15,14 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import static java.util.Collections.emptyList;
-import org.openrewrite.*;
-import static org.openrewrite.Tree.randomId;
-import org.openrewrite.java.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.AnnotationMatcher;
+import org.openrewrite.java.ChangeAnnotationAttributeName;
+import org.openrewrite.java.ChangeType;
+import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
@@ -27,7 +31,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MigrateApiToTag extends Recipe {
+import static java.util.Collections.emptyList;
+import static org.openrewrite.Tree.randomId;
+
     private static final String FQN_API = "io.swagger.annotations.Api";
     private static final String FQN_TAG = "io.swagger.v3.oas.annotations.tags.Tag";
     private static final String FQN_TAGS = "io.swagger.v3.oas.annotations.tags.Tags";
