@@ -52,6 +52,7 @@ public class MigrateApiToTag extends Recipe {
                                              "public @interface Tags {\n" +
                                              "    Tag[] value() default {};\n" +
                                              "}";
+
     @Language("java")
     private static final String TAG_CLASS = "package io.swagger.v3.oas.annotations.tags;\n" +
                                             "import java.lang.annotation.ElementType;\n" +
@@ -185,9 +186,8 @@ public class MigrateApiToTag extends Recipe {
 
                         // Add formatted template and imports
                         maybeAddImport(FQN_TAG);
-                        maybeAddImport(FQN_TAGS);
                         return JavaTemplate.builder(template.toString())
-                                .imports(FQN_TAGS, FQN_TAG)
+                                .imports(FQN_TAG)
                                 .javaParser(JavaParser.fromJavaVersion().dependsOn(TAGS_CLASS, TAG_CLASS))
                                 .build()
                                 .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
