@@ -193,23 +193,6 @@ recipeList:
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: org.openrewrite.openapi.swagger.MigrateApiToTag
-displayName: Migrate from `@Api` to `@Tag`
-description: Converts `@Api` to `@Tag` annotation and converts the directly mappable attributes and removes the others.
-tags:
-  - swagger
-  - openapi
-recipeList:
-  - org.openrewrite.java.ChangeAnnotationAttributeName:
-      annotationType: io.swagger.annotations.Api
-      oldAttributeName: "value"
-      newAttributeName: "name"
-  - org.openrewrite.java.ChangeType:
-      oldFullyQualifiedTypeName: io.swagger.annotations.Api
-      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
-
----
-type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiParamToParameter
 displayName: Migrate from `@ApiParam` to `@Parameter`
 description: Converts the `@ApiParam` annotation to `@Parameter` and converts the directly mappable attributes.
