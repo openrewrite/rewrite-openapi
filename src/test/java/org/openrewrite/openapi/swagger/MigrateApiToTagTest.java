@@ -27,7 +27,7 @@ class MigrateApiToTagTest implements RewriteTest {
 
     @Override
     public void defaults(RecipeSpec spec) {
-        spec.recipeFromResources("org.openrewrite.openapi.swagger.SwaggerToOpenAPI")
+        spec.recipe(new MigrateApiToTag())
           .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+"));
     }
 
@@ -47,6 +47,48 @@ class MigrateApiToTagTest implements RewriteTest {
               import io.swagger.v3.oas.annotations.tags.Tag;
 
               @Tag(name = "Bar")
+              class Example {}
+              """
+          )
+        );
+    }
+
+    @Test
+    void singleTagAsArray() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+
+              @Api(tags = {"foo"}, value = "Ignore", description = "Desc")
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "foo", description = "Desc")
+              class Example {}
+              """
+          )
+        );
+    }
+
+    @Test
+    void singleTagAsLiteral() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+
+              @Api(tags = "foo", value = "Ignore", description = "Desc")
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "foo", description = "Desc")
               class Example {}
               """
           )

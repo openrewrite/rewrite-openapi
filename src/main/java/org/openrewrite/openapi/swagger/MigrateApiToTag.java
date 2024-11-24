@@ -89,15 +89,11 @@ public class MigrateApiToTag extends Recipe {
                         J.Annotation ann = super.visitAnnotation(annotation, ctx);
                         if (apiMatcher.matches(ann)) {
                             Map<String, Expression> annotationArgumentAssignments = extractAnnotationArgumentAssignments(ann);
-                            Expression tagsAssignment = annotationArgumentAssignments.get("tags");
-                            if (tagsAssignment instanceof J.NewArray) {
-                                List<Expression> initializer = ((J.NewArray) tagsAssignment).getInitializer();
-                                if (initializer != null && 1 < initializer.size()) {
-                                    // Remove @Api and add @Tag or @Tags at class level
-                                    getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annotationArgumentAssignments);
-                                    maybeRemoveImport(FQN_API);
-                                    return null;
-                                }
+                            if (annotationArgumentAssignments.get("tags") != null) {
+                                // Remove @Api and add @Tag or @Tags at class level
+                                getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annotationArgumentAssignments);
+                                maybeRemoveImport(FQN_API);
+                                return null;
                             }
                             doAfterVisit(new ChangeAnnotationAttributeName(FQN_API, "value", "name").getVisitor());
                             doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
@@ -132,12 +128,27 @@ public class MigrateApiToTag extends Recipe {
                         }
 
                         Expression descriptionAssignment = annotationArguments.get("description");
-                        J.NewArray tagsAssignment = (J.NewArray) annotationArguments.get("tags");
+                        Expression tagsAssignment = annotationArguments.get("tags");
 
+                        if (tagsAssignment instanceof J.NewArray) {
+                            J.NewArray newArray = (J.NewArray) tagsAssignment;
+                            List<Expression> initializer = requireNonNull(newArray.getInitializer());
+                            if (initializer.size() == 1) {
+                                cd = addTagAnnotation(cd, initializer.get(0), descriptionAssignment);
+                            } else {
+                                cd = addTagsAnnotation(cd, initializer, descriptionAssignment);
+                            }
+                        } else {
+                            cd = addTagAnnotation(cd, tagsAssignment, descriptionAssignment);
+                        }
+                        return maybeAutoFormat(classDecl, cd, cd.getName(), ctx, getCursor().getParentTreeCursor());
+                    }
+
+                    private J.ClassDeclaration addTagsAnnotation(J.ClassDeclaration cd, List<Expression> tagsAssignments, @Nullable Expression descriptionAssignment) {
                         // Create template for @Tags annotation
                         StringBuilder template = new StringBuilder("@Tags({");
                         List<Expression> templateArgs = new ArrayList<>();
-                        for (Expression expression : requireNonNull(tagsAssignment.getInitializer())) {
+                        for (Expression expression : tagsAssignments) {
                             if (!templateArgs.isEmpty()) {
                                 template.append(",");
                             }
@@ -154,12 +165,32 @@ public class MigrateApiToTag extends Recipe {
                         // Add formatted template and imports
                         maybeAddImport(FQN_TAG);
                         maybeAddImport(FQN_TAGS);
-                        J.ClassDeclaration applied = JavaTemplate.builder(template.toString())
+                        return JavaTemplate.builder(template.toString())
                                 .imports(FQN_TAGS, FQN_TAG)
                                 .javaParser(JavaParser.fromJavaVersion().dependsOn(TAGS_CLASS, TAG_CLASS))
                                 .build()
                                 .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
-                        return maybeAutoFormat(classDecl, applied, applied.getName(), ctx, getCursor().getParentTreeCursor());
+                    }
+
+                    private J.ClassDeclaration addTagAnnotation(J.ClassDeclaration cd, Expression tagsAssignment, @Nullable Expression descriptionAssignment) {
+                        // Create template for @Tags annotation
+                        StringBuilder template = new StringBuilder("@Tag(name = #{any()}");
+                        List<Expression> templateArgs = new ArrayList<>();
+                        templateArgs.add(tagsAssignment);
+                        if (descriptionAssignment != null) {
+                            template.append(", description = #{any()}");
+                            templateArgs.add(descriptionAssignment);
+                        }
+                        template.append(")");
+
+                        // Add formatted template and imports
+                        maybeAddImport(FQN_TAG);
+                        maybeAddImport(FQN_TAGS);
+                        return JavaTemplate.builder(template.toString())
+                                .imports(FQN_TAGS, FQN_TAG)
+                                .javaParser(JavaParser.fromJavaVersion().dependsOn(TAGS_CLASS, TAG_CLASS))
+                                .build()
+                                .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
                     }
                 }
         );
