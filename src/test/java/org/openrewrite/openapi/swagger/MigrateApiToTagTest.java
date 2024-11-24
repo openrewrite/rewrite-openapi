@@ -54,14 +54,14 @@ class MigrateApiToTagTest implements RewriteTest {
     }
 
     @Test
-    void multiple() {
+    void multipleTags() {
         rewriteRun(
           //language=java
           java(
             """
               import io.swagger.annotations.Api;
 
-              @Api(tags={"foo", "bar"}, value = "Ignore", description = "Desc")
+              @Api(tags = {"foo", "bar"}, value = "Ignore", description = "Desc")
               class Example {}
               """,
             """
@@ -69,8 +69,8 @@ class MigrateApiToTagTest implements RewriteTest {
               import io.swagger.v3.oas.annotations.tags.Tags;
 
               @Tags({
-              @Tag(name="foo", description="Desc"),
-              @Tag(name="bar", description="Desc")
+                      @Tag(name = "foo", description = "Desc"),
+                      @Tag(name = "bar", description = "Desc")
               })
               class Example {}
               """

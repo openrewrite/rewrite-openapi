@@ -15,30 +15,57 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import org.intellij.lang.annotations.Language;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.ChangeAnnotationAttributeName;
-import org.openrewrite.java.ChangeType;
-import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
-import org.openrewrite.java.tree.*;
-import org.openrewrite.marker.Markers;
+import org.openrewrite.java.tree.Expression;
+import org.openrewrite.java.tree.J;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
-import static java.util.Collections.emptyList;
-import static org.openrewrite.Tree.randomId;
+import static java.util.Collections.emptyMap;
+import static java.util.Comparator.comparing;
+import static java.util.Objects.requireNonNull;
 
 public class MigrateApiToTag extends Recipe {
 
     private static final String FQN_API = "io.swagger.annotations.Api";
     private static final String FQN_TAG = "io.swagger.v3.oas.annotations.tags.Tag";
     private static final String FQN_TAGS = "io.swagger.v3.oas.annotations.tags.Tags";
+
+    @Language("java")
+    private static final String TAGS_CLASS = "package io.swagger.v3.oas.annotations.tags;\n" +
+                                             "import java.lang.annotation.ElementType;\n" +
+                                             "import java.lang.annotation.Retention;\n" +
+                                             "import java.lang.annotation.RetentionPolicy;\n" +
+                                             "import java.lang.annotation.Target;\n" +
+                                             "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})\n" +
+                                             "@Retention(RetentionPolicy.RUNTIME)\n" +
+                                             "public @interface Tags {\n" +
+                                             "    Tag[] value() default {};\n" +
+                                             "}";
+    @Language("java")
+    private static final String TAG_CLASS = "package io.swagger.v3.oas.annotations.tags;\n" +
+                                            "import java.lang.annotation.ElementType;\n" +
+                                            "import java.lang.annotation.Repeatable;\n" +
+                                            "import java.lang.annotation.Retention;\n" +
+                                            "import java.lang.annotation.RetentionPolicy;\n" +
+                                            "import java.lang.annotation.Target;\n" +
+                                            "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})\n" +
+                                            "@Retention(RetentionPolicy.RUNTIME)\n" +
+                                            "@Repeatable(Tags.class)\n" +
+                                            "public @interface Tag {\n" +
+                                            "    String name();\n" +
+                                            "    String description() default \"\";\n" +
+                                            "}";
 
     @Override
     public String getDisplayName() {
@@ -58,97 +85,81 @@ public class MigrateApiToTag extends Recipe {
                     private final AnnotationMatcher apiMatcher = new AnnotationMatcher(FQN_API);
 
                     @Override
-                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                        annotation = super.visitAnnotation(annotation, ctx);
-                        if (apiMatcher.matches(annotation)) {
-                            List<Expression> arguments = annotation.getArguments();
-                            boolean hasTags = arguments
-                                    .stream()
-                                    .filter(J.Assignment.class::isInstance)
-                                    .map(J.Assignment.class::cast).
-                                    anyMatch(o -> "tags".equals(o.getVariable().printTrimmed()));
-                            if (hasTags) {
-                                getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annotation);
-                                // Only remove @Api
-                                annotation = null;
-                            } else {
-                                doAfterVisit(new ChangeAnnotationAttributeName(FQN_API, "value", "name").getVisitor());
+                    public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                        J.Annotation ann = super.visitAnnotation(annotation, ctx);
+                        if (apiMatcher.matches(ann)) {
+                            Map<String, Expression> annotationArgumentAssignments = extractAnnotationArgumentAssignments(ann);
+                            Expression tagsAssignment = annotationArgumentAssignments.get("tags");
+                            if (tagsAssignment instanceof J.NewArray) {
+                                List<Expression> initializer = ((J.NewArray) tagsAssignment).getInitializer();
+                                if (initializer != null && 1 < initializer.size()) {
+                                    // Remove @Api and add @Tag or @Tags at class level
+                                    getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annotationArgumentAssignments);
+                                    maybeRemoveImport(FQN_API);
+                                    return null;
+                                }
                             }
-
+                            doAfterVisit(new ChangeAnnotationAttributeName(FQN_API, "value", "name").getVisitor());
                             doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
                         }
-                        return annotation;
+                        return ann;
+                    }
+
+                    private Map<String, Expression> extractAnnotationArgumentAssignments(J.Annotation apiAnnotation) {
+                        if (apiAnnotation.getArguments() == null ||
+                            apiAnnotation.getArguments().isEmpty() ||
+                            apiAnnotation.getArguments().get(0) instanceof J.Empty) {
+                            return emptyMap();
+                        }
+                        Map<String, Expression> map = new HashMap<>();
+                        for (Expression expression : apiAnnotation.getArguments()) {
+                            if (expression instanceof J.Assignment) {
+                                J.Assignment a = (J.Assignment) expression;
+                                String simpleName = ((J.Identifier) a.getVariable()).getSimpleName();
+                                map.put(simpleName, a.getAssignment());
+                            }
+                        }
+                        return map;
                     }
 
                     @Override
                     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
-                        classDecl = super.visitClassDeclaration(classDecl, ctx);
+                        J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
 
-                        J.Annotation apiAnnotation = getCursor().getMessage(FQN_API);
-                        if (apiAnnotation != null) {
-                            List<J.Assignment> arguments = apiAnnotation.getArguments().stream()
-                                    .filter(J.Assignment.class::isInstance)
-                                    .map(J.Assignment.class::cast)
-                                    .collect(Collectors.toList());
-
-                            // Get the description from the @Api annotation
-                            String desc = arguments.stream()
-                                    .filter(o -> "description".equals(o.getVariable().printTrimmed()))
-                                    .findFirst()
-                                    .map(assignment -> assignment.getAssignment().printTrimmed())
-                                    .orElse(null);
-
-                            // Get the tags from the @Api annotation
-                            String tags = arguments.stream()
-                                    .filter(o -> "tags".equals(o.getVariable().printTrimmed()))
-                                    .findFirst()
-                                    .map(o -> ((J.NewArray) o.getAssignment()).getInitializer().stream()
-                                            .map(J::printTrimmed)
-                                            .map(t -> "@Tag(name=" + t + (desc != null ? ", description=" + desc : "") + ")")
-                                            .collect(Collectors.joining(",\n"))
-                                    )
-                                    .orElse(null);
-                            if (tags != null) {
-                                List<J.Annotation> origin = classDecl.getLeadingAnnotations();
-                                origin.add(buildTags(tags));
-                                classDecl = classDecl.withLeadingAnnotations(origin);
-
-                                // Force import @Tag
-                                maybeAddImport(FQN_TAG, false);
-                                maybeAddImport(FQN_TAGS);
-                            }
+                        Map<String, Expression> annotationArguments = getCursor().getMessage(FQN_API);
+                        if (annotationArguments == null) {
+                            return cd;
                         }
 
-                        return classDecl;
-                    }
+                        Expression descriptionAssignment = annotationArguments.get("description");
+                        J.NewArray tagsAssignment = (J.NewArray) annotationArguments.get("tags");
 
-                    private J.Annotation buildTags(String tags) {
-                        J.Identifier id = new J.Identifier(randomId(), Space.EMPTY, Markers.EMPTY, emptyList(), "Tags", JavaType.buildType(FQN_TAGS), null);
-                        return new J.Annotation(
-                                randomId(),
-                                Space.EMPTY,
-                                Markers.EMPTY,
-                                id,
-                                JContainer.build(
-                                        Space.EMPTY,
-                                        Collections.singletonList(
-                                                new JRightPadded<>(
-                                                        new J.Literal(
-                                                                randomId(),
-                                                                Space.EMPTY,
-                                                                Markers.EMPTY,
-                                                                FQN_TAGS,
-                                                                "{\n" + tags + "\n}",
-                                                                null,
-                                                                JavaType.Primitive.String
-                                                        ),
-                                                        Space.EMPTY,
-                                                        Markers.EMPTY
-                                                )
-                                        ),
-                                        Markers.EMPTY
-                                )
-                        );
+                        // Create template for @Tags annotation
+                        StringBuilder template = new StringBuilder("@Tags({");
+                        List<Expression> templateArgs = new ArrayList<>();
+                        for (Expression expression : requireNonNull(tagsAssignment.getInitializer())) {
+                            if (!templateArgs.isEmpty()) {
+                                template.append(",");
+                            }
+                            template.append("\n@Tag(name = #{any()}");
+                            templateArgs.add(expression);
+                            if (descriptionAssignment != null) {
+                                template.append(", description = #{any()}");
+                                templateArgs.add(descriptionAssignment);
+                            }
+                            template.append(")");
+                        }
+                        template.append("\n})");
+
+                        // Add formatted template and imports
+                        maybeAddImport(FQN_TAG);
+                        maybeAddImport(FQN_TAGS);
+                        J.ClassDeclaration applied = JavaTemplate.builder(template.toString())
+                                .imports(FQN_TAGS, FQN_TAG)
+                                .javaParser(JavaParser.fromJavaVersion().dependsOn(TAGS_CLASS, TAG_CLASS))
+                                .build()
+                                .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
+                        return maybeAutoFormat(classDecl, applied, applied.getName(), ctx, getCursor().getParentTreeCursor());
                     }
                 }
         );
