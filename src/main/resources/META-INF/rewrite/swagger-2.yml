@@ -43,6 +43,9 @@ recipeList:
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.Tag
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: springfox.documentation.annotations.ApiIgnore
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Hidden
   - org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
   - org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
   - org.openrewrite.openapi.swagger.MigrateApiImplicitParamsToParameters
