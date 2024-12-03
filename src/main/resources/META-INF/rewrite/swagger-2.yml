@@ -230,6 +230,10 @@ recipeList:
   - org.openrewrite.java.RemoveAnnotationAttribute:
       annotationType: io.swagger.v3.oas.annotations.media.Schema
       attributeName: position
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.media.Schema
+      newAttributeName: type
+      oldAttributeName: dataType
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
