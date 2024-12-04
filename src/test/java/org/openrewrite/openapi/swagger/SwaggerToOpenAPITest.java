@@ -163,7 +163,8 @@ class SwaggerToOpenAPITest implements RewriteTest {
                               @Server(url = "http://example.com/api"),
                               @Server(url = "https://example.com/api")
                       },
-                      info = @Info(title = "Example", version = "V1.0"))
+                      info = @Info(title = "Example", version = "V1.0")
+              )
               class Example {
               }
               """

@@ -57,7 +57,8 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                       Map<String, Expression> args = AnnotationUtils.extractAnnotationArgumentAssignments(ann);
 
                       StringBuilder tpl = new StringBuilder("@OpenAPIDefinition(\n");
-                      List<Object> tplArgs = new ArrayList<>();
+                      List<Expression> tplArgs = new ArrayList<>();
+                      List<String> parts = new ArrayList<>();
 
                       Expression basePath = args.get("basePath");
                       Expression host = args.get("host");
@@ -72,15 +73,21 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                               String schemeName = ((J.FieldAccess) scheme).getSimpleName().toLowerCase();
                               servers += "@Server(url = \"" + schemeName + "://" + host + basePath + "\")";
                           }
-                          tpl.append(servers);
-                          tpl.append("\n}");
+                          servers += "\n}";
+                          parts.add(servers);
                       }
 
-                      if (args.containsKey("info")) {
-                          tpl.append(", \ninfo = #{any()}");
-                          tplArgs.add(args.get("info"));
+                      args.remove("basePath");
+                      args.remove("host");
+                      args.remove("schemes");
+                      args.remove("produces");
+                      args.remove("consumes");
+                      for (Map.Entry<String, Expression> arg : args.entrySet()) {
+                          parts.add(arg.getKey() + " = #{any()}");
+                          tplArgs.add(arg.getValue());
                       }
-                      tpl.append(")");
+                      tpl.append(String.join(",\n", parts));
+                      tpl.append("\n)");
 
                       ann = JavaTemplate.builder(tpl.toString())
                         .imports(FQN_OPENAPI_DEFINITION, FQN_SERVER)
