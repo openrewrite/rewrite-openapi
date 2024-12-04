@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.maven.Assertions.pomXml;
+import org.openrewrite.test.TypeValidation;
 
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
@@ -134,6 +135,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinition() {
         rewriteRun(
+          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
           //language=java
           java(
             """
@@ -152,11 +154,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
               }
               """,
             """
-              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-              import io.swagger.v3.oas.annotations.info.Info;
-              import io.swagger.v3.oas.annotations.servers.Server;
-              import jakarta.ws.rs.core.MediaType;
-
               import io.swagger.v3.oas.annotations.OpenAPIDefinition;
               import io.swagger.v3.oas.annotations.info.Info;
               import io.swagger.v3.oas.annotations.servers.Server;

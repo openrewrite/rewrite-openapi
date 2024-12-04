@@ -69,13 +69,8 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                               if (!servers.isEmpty()) {
                                   servers += ",\n";
                               }
-                              String url = host.toString() + basePath;
-                              String schemeName = ((J.FieldAccess) scheme).getSimpleName();
-                              if ("HTTP".equals(schemeName)) {
-                                  servers += "@Server(url = \"http://" + url + "\")";
-                              } else if ("HTTPS".equals(schemeName)) {
-                                  servers += "@Server(url = \"https://" + url + "\")";
-                              }
+                              String schemeName = ((J.FieldAccess) scheme).getSimpleName().toLowerCase();
+                              servers += "@Server(url = \"" + schemeName + "://" + host + basePath + "\")";
                           }
                           tpl.append(servers);
                           tpl.append("\n}");
