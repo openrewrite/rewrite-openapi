@@ -89,7 +89,7 @@ public class MigrateApiToTag extends Recipe {
                     public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                         J.Annotation ann = super.visitAnnotation(annotation, ctx);
                         if (apiMatcher.matches(ann)) {
-                            Map<String, Expression> annotationArgumentAssignments = extractAnnotationArgumentAssignments(ann);
+                            Map<String, Expression> annotationArgumentAssignments = AnnotationUtils.extractAnnotationArgumentAssignments(ann);
                             if (annotationArgumentAssignments.get("tags") != null) {
                                 // Remove @Api and add @Tag or @Tags at class level
                                 getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annotationArgumentAssignments);
@@ -100,23 +100,6 @@ public class MigrateApiToTag extends Recipe {
                             doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
                         }
                         return ann;
-                    }
-
-                    private Map<String, Expression> extractAnnotationArgumentAssignments(J.Annotation apiAnnotation) {
-                        if (apiAnnotation.getArguments() == null ||
-                            apiAnnotation.getArguments().isEmpty() ||
-                            apiAnnotation.getArguments().get(0) instanceof J.Empty) {
-                            return emptyMap();
-                        }
-                        Map<String, Expression> map = new HashMap<>();
-                        for (Expression expression : apiAnnotation.getArguments()) {
-                            if (expression instanceof J.Assignment) {
-                                J.Assignment a = (J.Assignment) expression;
-                                String simpleName = ((J.Identifier) a.getVariable()).getSimpleName();
-                                map.put(simpleName, a.getAssignment());
-                            }
-                        }
-                        return map;
                     }
 
                     @Override
