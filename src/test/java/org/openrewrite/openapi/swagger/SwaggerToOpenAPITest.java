@@ -17,14 +17,14 @@ package org.openrewrite.openapi.swagger;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import static org.openrewrite.java.Assertions.java;
 import org.openrewrite.java.JavaParser;
+import static org.openrewrite.maven.Assertions.pomXml;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
+import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Pattern;
-
-import static org.openrewrite.java.Assertions.java;
-import static org.openrewrite.maven.Assertions.pomXml;
 
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
@@ -48,10 +48,10 @@ class SwaggerToOpenAPITest implements RewriteTest {
           java(
             """
               package example.org;
-              
+
               import io.swagger.annotations.ApiModel;
               import io.swagger.annotations.ApiModelProperty;
-              
+
               @ApiModel(value="ApiModelExampleValue", description="ApiModelExampleDescription")
               class Example {
                 @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
@@ -60,9 +60,9 @@ class SwaggerToOpenAPITest implements RewriteTest {
               """,
             """
               package example.org;
-              
+
               import io.swagger.v3.oas.annotations.media.Schema;
-              
+
               @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
               class Example {
                 @Schema(description = "ApiModelPropertyExampleValue")
@@ -129,5 +129,45 @@ class SwaggerToOpenAPITest implements RewriteTest {
               .group(1)))
           )
         );
+    }
+
+    @Test
+    void migrateSwaggerDefinitionsToOpenAPIDefinition() {
+        rewriteRun(
+          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Info;
+              import io.swagger.annotations.SwaggerDefinition;
+              import jakarta.ws.rs.core.MediaType;
+
+              @SwaggerDefinition(
+                basePath = "/api",
+                host="example.com",
+                info = @Info(title = "Example", version = "V1.0"),
+                consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS })
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+              import io.swagger.v3.oas.annotations.info.Info;
+              import io.swagger.v3.oas.annotations.servers.Server;
+              import jakarta.ws.rs.core.MediaType;
+
+              @OpenAPIDefinition(
+                      servers = {
+                              @Server(url = "http://example.com/api"),
+                              @Server(url = "https://example.com/api")
+                      },
+                      info = @Info(title = "Example", version = "V1.0")
+              )
+              class Example {
+              }
+              """
+          ));
     }
 }
