@@ -17,14 +17,14 @@ package org.openrewrite.openapi.swagger;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import static org.openrewrite.java.Assertions.java;
 import org.openrewrite.java.JavaParser;
+import static org.openrewrite.maven.Assertions.pomXml;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
+import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Pattern;
-
-import static org.openrewrite.java.Assertions.java;
-import static org.openrewrite.maven.Assertions.pomXml;
 
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
@@ -48,10 +48,10 @@ class SwaggerToOpenAPITest implements RewriteTest {
           java(
             """
               package example.org;
-              
+
               import io.swagger.annotations.ApiModel;
               import io.swagger.annotations.ApiModelProperty;
-              
+
               @ApiModel(value="ApiModelExampleValue", description="ApiModelExampleDescription")
               class Example {
                 @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
@@ -60,9 +60,9 @@ class SwaggerToOpenAPITest implements RewriteTest {
               """,
             """
               package example.org;
-              
+
               import io.swagger.v3.oas.annotations.media.Schema;
-              
+
               @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
               class Example {
                 @Schema(description = "ApiModelPropertyExampleValue")
@@ -127,6 +127,35 @@ class SwaggerToOpenAPITest implements RewriteTest {
               .findFirst()
               .get()
               .group(1)))
+          )
+        );
+    }
+
+    @Test
+    void migrateApiImplicitParamDataTypeClass() {
+        rewriteRun(
+          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiImplicitParam;
+
+              class Example {
+                @ApiImplicitParam(name = "foo", value = "Foo object", required = true, dataTypeClass = Example.class)
+                public void create(Example foo) {
+                }
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo object", required = true, schema = @Schema(implementation = Example.class))
+                public void create(Example foo) {
+                }
+              }
+              """
           )
         );
     }
