@@ -15,8 +15,13 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import org.openrewrite.*;
+import org.openrewrite.ExecutionContext;
+import org.openrewrite.Preconditions;
+import org.openrewrite.Recipe;
+import org.openrewrite.TreeVisitor;
+import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.Expression;
@@ -38,43 +43,48 @@ public class MigrateApiImplicitParamDataTypeClass extends Recipe {
         return "Migrate `@ApiImplicitParam(dataTypeClass=Foo.class)` to `@Parameter(schema=@Schema(implementation=Foo.class))`.";
     }
 
-    private boolean isDataTypeClass(Expression exp) {
-        return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("dataTypeClass");
-    }
-
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-          new UsesMethod<>("io.swagger.annotations.ApiImplicitParam dataTypeClass()", false),
-          new JavaIsoVisitor<ExecutionContext>() {
-              @Override
-              public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                  J.Annotation anno = super.visitAnnotation(annotation, ctx);
+                new UsesMethod<>("io.swagger.annotations.ApiImplicitParam dataTypeClass()", false),
+                new JavaIsoVisitor<ExecutionContext>() {
+                    @Override
+                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                        J.Annotation anno = super.visitAnnotation(annotation, ctx);
 
-                  StringBuilder tpl = new StringBuilder();
-                  List<Expression> args = new ArrayList<>();
-                  for (Expression exp : annotation.getArguments()) {
-                      if (!args.isEmpty()) {
-                          tpl.append(", ");
-                      }
-                      if (isDataTypeClass(exp)) {
-                          J.FieldAccess fieldAccess = (J.FieldAccess) ((J.Assignment) exp).getAssignment();
-                          tpl.append("schema = @Schema(implementation = #{any()})");
-                          args.add(fieldAccess);
-                      } else {
-                          tpl.append("#{any()}");
-                          args.add(exp);
-                      }
-                  }
-                  anno = JavaTemplate.builder(tpl.toString())
-                    .imports(FQN_SCHEMA)
-                    .build()
-                    .apply(updateCursor(annotation), annotation.getCoordinates().replaceArguments(), args.toArray());
-                  maybeAddImport(FQN_SCHEMA, false);
-                  return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
-              }
-          }
+                        if (!new AnnotationMatcher("io.swagger.v3.oas.annotations.Parameter").matches(anno)) {
+                            return anno;
+                        }
+
+                        StringBuilder tpl = new StringBuilder();
+                        List<Expression> args = new ArrayList<>();
+                        for (Expression exp : anno.getArguments()) {
+                            if (!args.isEmpty()) {
+                                tpl.append(", ");
+                            }
+                            if (isDataTypeClass(exp)) {
+                                J.FieldAccess fieldAccess = (J.FieldAccess) ((J.Assignment) exp).getAssignment();
+                                tpl.append("schema = @Schema(implementation = #{any()})");
+                                args.add(fieldAccess);
+                            } else {
+                                tpl.append("#{any()}");
+                                args.add(exp);
+                            }
+                        }
+                        anno = JavaTemplate.builder(tpl.toString())
+                                .imports(FQN_SCHEMA)
+                                .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
+                                .build()
+                                .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
+                        maybeAddImport(FQN_SCHEMA, false);
+                        return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
+                    }
+
+                    private boolean isDataTypeClass(Expression exp) {
+                        return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("dataTypeClass");
+                    }
+                }
         );
     }
 }

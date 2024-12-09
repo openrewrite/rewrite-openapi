@@ -22,7 +22,6 @@ import org.openrewrite.java.JavaParser;
 import static org.openrewrite.maven.Assertions.pomXml;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Pattern;
 
@@ -134,7 +133,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Test
     void migrateApiImplicitParamDataTypeClass() {
         rewriteRun(
-          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
           //language=java
           java(
             """
