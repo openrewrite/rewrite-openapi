@@ -17,13 +17,14 @@ package org.openrewrite.openapi.swagger;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
-import static org.openrewrite.java.Assertions.java;
 import org.openrewrite.java.JavaParser;
-import static org.openrewrite.maven.Assertions.pomXml;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
 import java.util.regex.Pattern;
+
+import static org.openrewrite.java.Assertions.java;
+import static org.openrewrite.maven.Assertions.pomXml;
 
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
