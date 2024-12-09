@@ -20,10 +20,7 @@ import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
@@ -104,6 +101,7 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                             maybeAddImport(FQN_OPENAPI_DEFINITION, false);
                             maybeAddImport(FQN_SERVER, false);
                             ann = maybeAutoFormat(annotation, ann, ctx);
+                            doAfterVisit(new RemoveUnusedImports().getVisitor());
                         }
 
                         return ann;
