@@ -20,7 +20,6 @@ import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Pattern;
 
@@ -135,7 +134,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinition() {
         rewriteRun(
-          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
           //language=java
           java(
             """
@@ -169,6 +167,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
               class Example {
               }
               """
-          ));
+          )
+        );
     }
 }

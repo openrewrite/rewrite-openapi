@@ -97,7 +97,7 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
 
                             ann = JavaTemplate.builder(tpl.toString())
                                     .imports(FQN_OPENAPI_DEFINITION, FQN_SERVER)
-                                    .javaParser(JavaParser.fromJavaVersion().dependsOn(FQN_OPENAPI_DEFINITION, FQN_SERVER))
+                                    .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
                                     .build()
                                     .apply(updateCursor(ann), ann.getCoordinates().replace(), tplArgs.toArray());
                             maybeRemoveImport(FQN_SWAGGER_DEFINITION);
