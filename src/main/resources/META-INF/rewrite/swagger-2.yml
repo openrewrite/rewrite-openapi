@@ -44,6 +44,9 @@ recipeList:
       oldFullyQualifiedTypeName: io.swagger.annotations.Tag
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
   - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.Info
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.info.Info
+  - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: springfox.documentation.annotations.ApiIgnore
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Hidden
   - org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
@@ -53,6 +56,7 @@ recipeList:
   - org.openrewrite.openapi.swagger.MigrateApiParamToParameter
   - org.openrewrite.openapi.swagger.MigrateApiModelPropertyToSchema
   - org.openrewrite.openapi.swagger.MigrateApiModelToSchema
+  - org.openrewrite.openapi.swagger.MigrateSwaggerDefinitionToOpenAPIDefinition
 
 # todo add swagger-core to common-dependencies
 
