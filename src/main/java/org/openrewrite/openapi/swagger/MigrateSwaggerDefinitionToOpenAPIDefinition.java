@@ -50,6 +50,12 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
               private final AnnotationMatcher annotationMatcher = new AnnotationMatcher(FQN_SWAGGER_DEFINITION);
 
               @Override
+              public J.CompilationUnit visitCompilationUnit(J.CompilationUnit cu, ExecutionContext executionContext) {
+                  cu = super.visitCompilationUnit(cu, executionContext);
+                  return cu;
+              }
+
+              @Override
               public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                   J.Annotation ann = super.visitAnnotation(annotation, ctx);
 
@@ -66,12 +72,16 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                       String servers = "";
                       if (basePath != null && host != null && schemes != null) {
                           tpl.append("servers = {\n");
-                          for (Expression scheme : ((J.NewArray) schemes).getInitializer()) {
-                              if (!servers.isEmpty()) {
-                                  servers += ",\n";
+                          if (schemes instanceof J.FieldAccess) {
+                              servers += "@Server(url = \"" + ((J.FieldAccess) schemes).getSimpleName().toLowerCase() + "://" + host + basePath + "\")";
+                          } else if (schemes instanceof J.NewArray) {
+                              for (Expression scheme : ((J.NewArray) schemes).getInitializer()) {
+                                  if (!servers.isEmpty()) {
+                                      servers += ",\n";
+                                  }
+                                  String schemeName = ((J.FieldAccess) scheme).getSimpleName().toLowerCase();
+                                  servers += "@Server(url = \"" + schemeName + "://" + host + basePath + "\")";
                               }
-                              String schemeName = ((J.FieldAccess) scheme).getSimpleName().toLowerCase();
-                              servers += "@Server(url = \"" + schemeName + "://" + host + basePath + "\")";
                           }
                           servers += "\n}";
                           parts.add(servers);
@@ -91,7 +101,7 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
 
                       ann = JavaTemplate.builder(tpl.toString())
                         .imports(FQN_OPENAPI_DEFINITION, FQN_SERVER)
-                        .javaParser(JavaParser.fromJavaVersion().dependsOn(FQN_OPENAPI_DEFINITION, FQN_SERVER))
+                        .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
                         .build()
                         .apply(updateCursor(ann), ann.getCoordinates().replace(), tplArgs.toArray());
                       maybeRemoveImport(FQN_SWAGGER_DEFINITION);
@@ -100,6 +110,7 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                       ann = maybeAutoFormat(annotation, ann, ctx);
                   }
 
+                  doAfterVisit(new RemoveUnusedImports().getVisitor());
                   return ann;
               }
           }

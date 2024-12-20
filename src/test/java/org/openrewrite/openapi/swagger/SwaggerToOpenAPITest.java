@@ -30,7 +30,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.SwaggerToOpenAPI")
-          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+"));
+          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+", "rs-api"));
     }
 
     @Test
@@ -132,9 +132,47 @@ class SwaggerToOpenAPITest implements RewriteTest {
     }
 
     @Test
-    void migrateSwaggerDefinitionsToOpenAPIDefinition() {
+    void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
         rewriteRun(
-          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Info;
+              import io.swagger.annotations.SwaggerDefinition;
+              import jakarta.ws.rs.core.MediaType;
+
+              @SwaggerDefinition(
+                basePath = "/api",
+                host="example.com",
+                info = @Info(title = "Example", version = "V1.0"),
+                consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                schemes = SwaggerDefinition.Scheme.HTTPS
+              )
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+              import io.swagger.v3.oas.annotations.info.Info;
+              import io.swagger.v3.oas.annotations.servers.Server;
+
+              @OpenAPIDefinition(
+                      servers = {
+                              @Server(url = "https://example.com/api")
+                      },
+                      info = @Info(title = "Example", version = "V1.0")
+              )
+              class Example {
+              }
+              """
+          ));
+    }
+
+    @Test
+    void migrateSwaggerDefinitionsToOpenAPIDefinitionMultipleSchema() {
+        rewriteRun(
+//          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
           //language=java
           java(
             """
@@ -156,7 +194,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
               import io.swagger.v3.oas.annotations.OpenAPIDefinition;
               import io.swagger.v3.oas.annotations.info.Info;
               import io.swagger.v3.oas.annotations.servers.Server;
-              import jakarta.ws.rs.core.MediaType;
 
               @OpenAPIDefinition(
                       servers = {

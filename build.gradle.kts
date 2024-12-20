@@ -20,6 +20,7 @@ dependencies {
 
     testRuntimeOnly("io.swagger:swagger-annotations:1.6.13")
     testRuntimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
+    testRuntimeOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
 
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
 }
