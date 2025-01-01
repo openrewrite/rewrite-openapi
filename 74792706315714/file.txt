@@ -1,0 +1,28 @@
+![Logo](https://github.com/openrewrite/rewrite/raw/main/doc/logo-oss.png)
+### Migrate OpenAPI. Automatically.
+
+[![ci](https://github.com/openrewrite/rewrite-openapi/actions/workflows/ci.yml/badge.svg)](https://github.com/openrewrite/rewrite-openapi/actions/workflows/ci.yml)
+[![Apache 2.0](https://img.shields.io/github/license/openrewrite/rewrite-openapi.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Maven Central](https://img.shields.io/maven-central/v/org.openrewrite.recipe/rewrite-openapi.svg)](https://mvnrepository.com/artifact/org.openrewrite.recipe/rewrite-openapi)
+[![Revved up by Develocity](https://img.shields.io/badge/Revved%20up%20by-Develocity-06A0CE?logo=Gradle&labelColor=02303A)](https://ge.openrewrite.org/scans)
+
+### What is this?
+
+This project is an OpenRewrite module that automates common migration tasks when upgrading OpenAPI specifications.  It offers a collection of recipes designed to streamline the transition process, reducing manual effort and the risk of errors.
+
+### Recipes
+
+This module provides several recipes to assist in migrating your OpenAPI specifications. These recipes handle tasks such as:
+
+* **Migrating Swagger Annotations:**  Recipes are included to help migrate from older Swagger annotations to the newer OpenAPI annotation standards.  This includes converting `@ApiImplicitParam` annotations with `dataTypeClass` to the equivalent `@Parameter` annotations with `schema` and `implementation` properties.  The migration also handles display names and descriptions.
+
+* **Migrating from Swagger API to OpenAPI Tags:** Recipes simplify the transition of annotations from Swagger's API declarations to OpenAPI 3's tag system.
+
+* **Converting API Response Codes:** Recipes automatically convert API response codes from numeric formats to string representations.
+
+
+Browse [a selection of recipes available through this module in the recipe catalog](https://docs.openrewrite.org/recipes/openapi).
+
+## Contributing
+
+We appreciate all types of contributions. See the [contributing guide](https://github.com/openrewrite/.github/blob/main/CONTRIBUTING.md) for detailed instructions on how to get started.
