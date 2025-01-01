@@ -17,14 +17,14 @@ package org.openrewrite.openapi.swagger;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
-import static org.openrewrite.java.Assertions.java;
 import org.openrewrite.java.JavaParser;
-import static org.openrewrite.maven.Assertions.pomXml;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-import org.openrewrite.test.TypeValidation;
 
 import java.util.regex.Pattern;
+
+import static org.openrewrite.java.Assertions.java;
+import static org.openrewrite.maven.Assertions.pomXml;
 
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
@@ -47,8 +47,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
           //language=java
           java(
             """
-              package example.org;
-
               import io.swagger.annotations.ApiModel;
               import io.swagger.annotations.ApiModelProperty;
 
@@ -59,8 +57,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
               }
               """,
             """
-              package example.org;
-
               import io.swagger.v3.oas.annotations.media.Schema;
 
               @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
@@ -194,13 +190,13 @@ class SwaggerToOpenAPITest implements RewriteTest {
               class Example {
               }
               """
-          ));
+          )
+        );
     }
 
     @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinitionMultipleSchema() {
         rewriteRun(
-//          recipeSpec -> recipeSpec.afterTypeValidationOptions(TypeValidation.none()),
           //language=java
           java(
             """
@@ -233,6 +229,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
               class Example {
               }
               """
-          ));
+          )
+        );
     }
 }
