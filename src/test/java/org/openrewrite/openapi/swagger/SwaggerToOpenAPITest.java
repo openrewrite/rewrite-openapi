@@ -30,7 +30,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.SwaggerToOpenAPI")
-          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+"));
+          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+", "rs-api"));
     }
 
     @Test
@@ -47,8 +47,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
           //language=java
           java(
             """
-              package example.org;
-
               import io.swagger.annotations.ApiModel;
               import io.swagger.annotations.ApiModelProperty;
 
@@ -59,8 +57,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
               }
               """,
             """
-              package example.org;
-
               import io.swagger.v3.oas.annotations.media.Schema;
 
               @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
@@ -153,6 +149,84 @@ class SwaggerToOpenAPITest implements RewriteTest {
                 @Parameter(name = "foo", description = "Foo object", required = true, schema = @Schema(implementation = Example.class))
                 public void create(Example foo) {
                 }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Info;
+              import io.swagger.annotations.SwaggerDefinition;
+              import jakarta.ws.rs.core.MediaType;
+
+              @SwaggerDefinition(
+                basePath = "/api",
+                host="example.com",
+                info = @Info(title = "Example", version = "V1.0"),
+                consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                schemes = SwaggerDefinition.Scheme.HTTPS
+              )
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+              import io.swagger.v3.oas.annotations.info.Info;
+              import io.swagger.v3.oas.annotations.servers.Server;
+
+              @OpenAPIDefinition(
+                      servers = {
+                              @Server(url = "https://example.com/api")
+                      },
+                      info = @Info(title = "Example", version = "V1.0")
+              )
+              class Example {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateSwaggerDefinitionsToOpenAPIDefinitionMultipleSchema() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Info;
+              import io.swagger.annotations.SwaggerDefinition;
+              import jakarta.ws.rs.core.MediaType;
+
+              @SwaggerDefinition(
+                basePath = "/api",
+                host="example.com",
+                info = @Info(title = "Example", version = "V1.0"),
+                consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML },
+                schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS })
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+              import io.swagger.v3.oas.annotations.info.Info;
+              import io.swagger.v3.oas.annotations.servers.Server;
+
+              @OpenAPIDefinition(
+                      servers = {
+                              @Server(url = "http://example.com/api"),
+                              @Server(url = "https://example.com/api")
+                      },
+                      info = @Info(title = "Example", version = "V1.0")
+              )
+              class Example {
               }
               """
           )

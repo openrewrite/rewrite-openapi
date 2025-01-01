@@ -21,6 +21,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
     testRuntimeOnly("io.swagger:swagger-annotations:1.6.13")
+    testRuntimeOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
 
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
 }

@@ -27,11 +27,9 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Collections.emptyMap;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
@@ -42,31 +40,33 @@ public class MigrateApiToTag extends Recipe {
     private static final String FQN_TAGS = "io.swagger.v3.oas.annotations.tags.Tags";
 
     @Language("java")
-    private static final String TAGS_CLASS = "package io.swagger.v3.oas.annotations.tags;\n" +
-                                             "import java.lang.annotation.ElementType;\n" +
-                                             "import java.lang.annotation.Retention;\n" +
-                                             "import java.lang.annotation.RetentionPolicy;\n" +
-                                             "import java.lang.annotation.Target;\n" +
-                                             "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})\n" +
-                                             "@Retention(RetentionPolicy.RUNTIME)\n" +
-                                             "public @interface Tags {\n" +
-                                             "    Tag[] value() default {};\n" +
-                                             "}";
+    private static final String TAGS_CLASS =
+            "package io.swagger.v3.oas.annotations.tags;\n" +
+            "import java.lang.annotation.ElementType;\n" +
+            "import java.lang.annotation.Retention;\n" +
+            "import java.lang.annotation.RetentionPolicy;\n" +
+            "import java.lang.annotation.Target;\n" +
+            "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})\n" +
+            "@Retention(RetentionPolicy.RUNTIME)\n" +
+            "public @interface Tags {\n" +
+            "    Tag[] value() default {};\n" +
+            "}";
 
     @Language("java")
-    private static final String TAG_CLASS = "package io.swagger.v3.oas.annotations.tags;\n" +
-                                            "import java.lang.annotation.ElementType;\n" +
-                                            "import java.lang.annotation.Repeatable;\n" +
-                                            "import java.lang.annotation.Retention;\n" +
-                                            "import java.lang.annotation.RetentionPolicy;\n" +
-                                            "import java.lang.annotation.Target;\n" +
-                                            "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})\n" +
-                                            "@Retention(RetentionPolicy.RUNTIME)\n" +
-                                            "@Repeatable(Tags.class)\n" +
-                                            "public @interface Tag {\n" +
-                                            "    String name();\n" +
-                                            "    String description() default \"\";\n" +
-                                            "}";
+    private static final String TAG_CLASS =
+            "package io.swagger.v3.oas.annotations.tags;\n" +
+            "import java.lang.annotation.ElementType;\n" +
+            "import java.lang.annotation.Repeatable;\n" +
+            "import java.lang.annotation.Retention;\n" +
+            "import java.lang.annotation.RetentionPolicy;\n" +
+            "import java.lang.annotation.Target;\n" +
+            "@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})\n" +
+            "@Retention(RetentionPolicy.RUNTIME)\n" +
+            "@Repeatable(Tags.class)\n" +
+            "public @interface Tag {\n" +
+            "    String name();\n" +
+            "    String description() default \"\";\n" +
+            "}";
 
     @Override
     public String getDisplayName() {
@@ -89,7 +89,7 @@ public class MigrateApiToTag extends Recipe {
                     public J.@Nullable Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                         J.Annotation ann = super.visitAnnotation(annotation, ctx);
                         if (apiMatcher.matches(ann)) {
-                            Map<String, Expression> annotationArgumentAssignments = extractAnnotationArgumentAssignments(ann);
+                            Map<String, Expression> annotationArgumentAssignments = AnnotationUtils.extractAnnotationArgumentAssignments(ann);
                             if (annotationArgumentAssignments.get("tags") != null) {
                                 // Remove @Api and add @Tag or @Tags at class level
                                 getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annotationArgumentAssignments);
@@ -100,23 +100,6 @@ public class MigrateApiToTag extends Recipe {
                             doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
                         }
                         return ann;
-                    }
-
-                    private Map<String, Expression> extractAnnotationArgumentAssignments(J.Annotation apiAnnotation) {
-                        if (apiAnnotation.getArguments() == null ||
-                            apiAnnotation.getArguments().isEmpty() ||
-                            apiAnnotation.getArguments().get(0) instanceof J.Empty) {
-                            return emptyMap();
-                        }
-                        Map<String, Expression> map = new HashMap<>();
-                        for (Expression expression : apiAnnotation.getArguments()) {
-                            if (expression instanceof J.Assignment) {
-                                J.Assignment a = (J.Assignment) expression;
-                                String simpleName = ((J.Identifier) a.getVariable()).getSimpleName();
-                                map.put(simpleName, a.getAssignment());
-                            }
-                        }
-                        return map;
                     }
 
                     @Override
