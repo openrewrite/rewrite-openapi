@@ -132,6 +132,34 @@ class SwaggerToOpenAPITest implements RewriteTest {
     }
 
     @Test
+    void migrateApiImplicitParamDataTypeClass() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiImplicitParam;
+
+              class Example {
+                @ApiImplicitParam(name = "foo", value = "Foo object", required = true, dataTypeClass = Example.class)
+                public void create(Example foo) {
+                }
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo object", required = true, schema = @Schema(implementation = Example.class))
+                public void create(Example foo) {
+                }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
         rewriteRun(
           //language=java

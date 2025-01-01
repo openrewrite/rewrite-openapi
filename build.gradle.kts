@@ -11,6 +11,8 @@ dependencies {
     implementation("org.openrewrite:rewrite-java")
     implementation("org.openrewrite.recipe:rewrite-java-dependencies:$rewriteVersion")
 
+    runtimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
+
     testImplementation("org.openrewrite:rewrite-java-17")
     testImplementation("org.openrewrite:rewrite-test")
     testImplementation("org.openrewrite:rewrite-gradle")
@@ -19,7 +21,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:latest.release")
 
     testRuntimeOnly("io.swagger:swagger-annotations:1.6.13")
-    testRuntimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
     testRuntimeOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
 
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
