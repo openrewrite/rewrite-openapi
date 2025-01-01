@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.experimental.UtilityClass;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
@@ -23,7 +24,8 @@ import java.util.Map;
 
 import static java.util.Collections.emptyMap;
 
-public class AnnotationUtils {
+@UtilityClass
+class AnnotationUtils {
     public static Map<String, Expression> extractAnnotationArgumentAssignments(J.Annotation annotation) {
         if (annotation.getArguments() == null ||
                 annotation.getArguments().isEmpty() ||
