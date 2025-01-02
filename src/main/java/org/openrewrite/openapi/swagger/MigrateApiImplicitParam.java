@@ -30,7 +30,7 @@ import org.openrewrite.java.tree.J;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MigrateApiImplicitParamDataTypeClass extends Recipe {
+public class MigrateApiImplicitParam extends Recipe {
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
 
     @Override
@@ -58,19 +58,31 @@ public class MigrateApiImplicitParamDataTypeClass extends Recipe {
                         }
 
                         StringBuilder tpl = new StringBuilder();
+                        StringBuilder schemaTpl = new StringBuilder();
                         List<Expression> args = new ArrayList<>();
                         for (Expression exp : anno.getArguments()) {
-                            if (!args.isEmpty()) {
-                                tpl.append(", ");
-                            }
                             if (isDataTypeClass(exp)) {
-                                J.FieldAccess fieldAccess = (J.FieldAccess) ((J.Assignment) exp).getAssignment();
-                                tpl.append("schema = @Schema(implementation = #{any()})");
-                                args.add(fieldAccess);
+                                Expression expression = ((J.Assignment) exp).getAssignment();
+                                addSchema(schemaTpl, "implementation");
+                                args.add(expression);
+                            } else if (isDefaultValue(exp)) {
+                                Expression expression = ((J.Assignment) exp).getAssignment();
+                                addSchema(schemaTpl, "defaultValue");
+                                args.add(expression);
                             } else {
-                                tpl.append("#{any()}");
+                                tpl.append("#{any()}, ");
                                 args.add(exp);
                             }
+                        }
+                        if (tpl.toString().endsWith(", ")) {
+                            tpl.delete(tpl.length() - 2, tpl.length());
+                        }
+                        if (schemaTpl.length() > 0) {
+                            if (schemaTpl.toString().endsWith(", ")) {
+                                schemaTpl.delete(schemaTpl.length() - 2, schemaTpl.length());
+                            }
+                            schemaTpl.append(")");
+                            tpl.append(", ").append(schemaTpl);
                         }
                         anno = JavaTemplate.builder(tpl.toString())
                                 .imports(FQN_SCHEMA)
@@ -81,8 +93,19 @@ public class MigrateApiImplicitParamDataTypeClass extends Recipe {
                         return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
                     }
 
+                    private void addSchema(StringBuilder tpl, String key) {
+                        if (tpl.length() == 0) {
+                            tpl.append("schema = @Schema(");
+                        }
+                        tpl.append(key).append(" = #{any()}, ");
+                    }
+
                     private boolean isDataTypeClass(Expression exp) {
                         return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("dataTypeClass");
+                    }
+
+                    private boolean isDefaultValue(Expression exp) {
+                        return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("defaultValue");
                     }
                 }
         );
