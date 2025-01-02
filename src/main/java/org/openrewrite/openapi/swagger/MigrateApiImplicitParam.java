@@ -29,12 +29,12 @@ public class MigrateApiImplicitParam extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Migrate `@ApiImplicitParam(dataTypeClass=Foo.class)` to `@Parameter(schema=@Schema(implementation=Foo.class))`";
+        return "Migrate `@ApiImplicitParam` to `@Parameter)`";
     }
 
     @Override
     public String getDescription() {
-        return "Migrate `@ApiImplicitParam(dataTypeClass=Foo.class)` to `@Parameter(schema=@Schema(implementation=Foo.class))`.";
+        return "Migrate `@ApiImplicitParam` to `@Parameter`.";
     }
 
     @Override
