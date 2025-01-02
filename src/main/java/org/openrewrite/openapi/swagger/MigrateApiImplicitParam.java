@@ -41,7 +41,10 @@ public class MigrateApiImplicitParam extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-          new UsesMethod<>("io.swagger.annotations.ApiImplicitParam dataTypeClass()", false),
+          Preconditions.or(
+            new UsesMethod<>("io.swagger.annotations.ApiImplicitParam dataTypeClass()", false),
+            new UsesMethod<>("io.swagger.annotations.ApiImplicitParam defaultValue()", false)
+          ),
           new JavaIsoVisitor<ExecutionContext>() {
               @Override
               public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
