@@ -197,7 +197,7 @@ recipeList:
   - org.openrewrite.java.RemoveAnnotationAttribute:
       annotationType: io.swagger.v3.oas.annotations.Parameter
       attributeName: allowMultiple
-  - org.openrewrite.openapi.swagger.MigrateApiImplicitParamDataTypeClass
+  - org.openrewrite.openapi.swagger.MigrateApiImplicitParam
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
