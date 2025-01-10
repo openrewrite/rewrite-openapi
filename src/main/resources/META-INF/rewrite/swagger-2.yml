@@ -215,6 +215,10 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.Parameter
       oldAttributeName: "value"
       newAttributeName: "description"
+  - org.openrewrite.java.RemoveAnnotationAttribute:
+      annotationType: io.swagger.v3.oas.annotations.Parameter
+      attributeName: allowMultiple
+  - org.openrewrite.openapi.swagger.MigrateApiParamDefaultValue
 
 ---
 type: specs.openrewrite.org/v1beta/recipe

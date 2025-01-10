@@ -35,7 +35,7 @@ public class MigrateApiImplicitParam extends Recipe {
 
     @Override
     public String getDisplayName() {
-        return "Migrate `@ApiImplicitParam` to `@Parameter)`";
+        return "Migrate `@ApiImplicitParam` to `@Parameter`";
     }
 
     @Override
