@@ -32,6 +32,7 @@ import java.util.List;
 
 public class MigrateApiParamDefaultValue extends Recipe {
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
+    private static final AnnotationMatcher PARAMETER_ANNOTATION_MATCHER = new AnnotationMatcher("io.swagger.v3.oas.annotations.Parameter");
 
     @Override
     public String getDisplayName() {
@@ -40,66 +41,66 @@ public class MigrateApiParamDefaultValue extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema)`.";
+        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema = @Schema(defaultValue))`.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-        new UsesMethod<>("io.swagger.annotations.ApiParam defaultValue()", false),
-          new JavaIsoVisitor<ExecutionContext>() {
-              @Override
-              public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                  J.Annotation anno = super.visitAnnotation(annotation, ctx);
+                new UsesMethod<>("io.swagger.annotations.ApiParam defaultValue()", false),
+                new JavaIsoVisitor<ExecutionContext>() {
+                    @Override
+                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                        J.Annotation anno = super.visitAnnotation(annotation, ctx);
 
-                  if (!new AnnotationMatcher("io.swagger.v3.oas.annotations.Parameter").matches(anno)) {
-                      return anno;
-                  }
+                        if (!PARAMETER_ANNOTATION_MATCHER.matches(anno)) {
+                            return anno;
+                        }
 
-                  StringBuilder tpl = new StringBuilder();
-                  StringBuilder schemaTpl = new StringBuilder();
-                  List<Expression> args = new ArrayList<>();
-                  for (Expression exp : anno.getArguments()) {
-                      if (isDefaultValue(exp)) {
-                          Expression expression = ((J.Assignment) exp).getAssignment();
-                          addSchema(schemaTpl, "defaultValue");
-                          args.add(expression);
-                      } else {
-                          tpl.append("#{any()}, ");
-                          args.add(exp);
-                      }
-                  }
-                  if (tpl.toString().endsWith(", ")) {
-                      tpl.delete(tpl.length() - 2, tpl.length());
-                  }
-                  if (schemaTpl.length() > 0) {
-                      if (schemaTpl.toString().endsWith(", ")) {
-                          schemaTpl.delete(schemaTpl.length() - 2, schemaTpl.length());
-                      }
-                      schemaTpl.append(")");
-                      tpl.append(", ").append(schemaTpl);
-                  }
-                  anno = JavaTemplate.builder(tpl.toString())
-                    .imports(FQN_SCHEMA)
-                    .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
-                    .build()
-                    .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
-                  maybeAddImport(FQN_SCHEMA, false);
-                  return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
-              }
+                        StringBuilder tpl = new StringBuilder();
+                        StringBuilder schemaTpl = new StringBuilder();
+                        List<Expression> args = new ArrayList<>();
+                        for (Expression exp : anno.getArguments()) {
+                            if (isDefaultValue(exp)) {
+                                Expression expression = ((J.Assignment) exp).getAssignment();
+                                addSchema(schemaTpl, "defaultValue");
+                                args.add(expression);
+                            } else {
+                                tpl.append("#{any()}, ");
+                                args.add(exp);
+                            }
+                        }
+                        if (tpl.toString().endsWith(", ")) {
+                            tpl.delete(tpl.length() - 2, tpl.length());
+                        }
+                        if (schemaTpl.length() > 0) {
+                            if (schemaTpl.toString().endsWith(", ")) {
+                                schemaTpl.delete(schemaTpl.length() - 2, schemaTpl.length());
+                            }
+                            schemaTpl.append(")");
+                            tpl.append(", ").append(schemaTpl);
+                        }
+                        anno = JavaTemplate.builder(tpl.toString())
+                                .imports(FQN_SCHEMA)
+                                .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
+                                .build()
+                                .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
+                        maybeAddImport(FQN_SCHEMA, false);
+                        return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
+                    }
 
-              private void addSchema(StringBuilder tpl, String key) {
-                  if (tpl.length() == 0) {
-                      tpl.append("schema = @Schema(");
-                  }
-                  tpl.append(key).append(" = #{any()}, ");
-              }
+                    private void addSchema(StringBuilder tpl, String key) {
+                        if (tpl.length() == 0) {
+                            tpl.append("schema = @Schema(");
+                        }
+                        tpl.append(key).append(" = #{any()}, ");
+                    }
 
-              private boolean isDefaultValue(Expression exp) {
-                  return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("defaultValue");
-              }
-          }
+                    private boolean isDefaultValue(Expression exp) {
+                        return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("defaultValue");
+                    }
+                }
         );
     }
 }
