@@ -15,14 +15,8 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.*;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesMethod;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
@@ -30,27 +24,24 @@ import org.openrewrite.java.tree.J;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MigrateApiImplicitParam extends Recipe {
+public class MigrateApiParamDefaultValue extends Recipe {
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
 
     @Override
     public String getDisplayName() {
-        return "Migrate `@ApiImplicitParam` to `@Parameter`";
+        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema)`";
     }
 
     @Override
     public String getDescription() {
-        return "Migrate `@ApiImplicitParam` to `@Parameter`.";
+        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema)`.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-          Preconditions.or(
-            new UsesMethod<>("io.swagger.annotations.ApiImplicitParam dataTypeClass()", false),
-            new UsesMethod<>("io.swagger.annotations.ApiImplicitParam defaultValue()", false)
-          ),
+        new UsesMethod<>("io.swagger.annotations.ApiParam defaultValue()", false),
           new JavaIsoVisitor<ExecutionContext>() {
               @Override
               public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
@@ -64,11 +55,7 @@ public class MigrateApiImplicitParam extends Recipe {
                   StringBuilder schemaTpl = new StringBuilder();
                   List<Expression> args = new ArrayList<>();
                   for (Expression exp : anno.getArguments()) {
-                      if (isDataTypeClass(exp)) {
-                          Expression expression = ((J.Assignment) exp).getAssignment();
-                          addSchema(schemaTpl, "implementation");
-                          args.add(expression);
-                      } else if (isDefaultValue(exp)) {
+                      if (isDefaultValue(exp)) {
                           Expression expression = ((J.Assignment) exp).getAssignment();
                           addSchema(schemaTpl, "defaultValue");
                           args.add(expression);
@@ -101,10 +88,6 @@ public class MigrateApiImplicitParam extends Recipe {
                       tpl.append("schema = @Schema(");
                   }
                   tpl.append(key).append(" = #{any()}, ");
-              }
-
-              private boolean isDataTypeClass(Expression exp) {
-                  return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("dataTypeClass");
               }
 
               private boolean isDefaultValue(Expression exp) {
