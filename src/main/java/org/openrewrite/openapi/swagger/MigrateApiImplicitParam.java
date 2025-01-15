@@ -62,16 +62,17 @@ public class MigrateApiImplicitParam extends Recipe {
 
                   StringBuilder tpl = new StringBuilder();
                   StringBuilder schemaTpl = new StringBuilder();
+                  List<Expression> schemaArgs = new ArrayList<>();
                   List<Expression> args = new ArrayList<>();
                   for (Expression exp : anno.getArguments()) {
                       if (isDataTypeClass(exp)) {
                           Expression expression = ((J.Assignment) exp).getAssignment();
                           addSchema(schemaTpl, "implementation");
-                          args.add(expression);
+                          schemaArgs.add(expression);
                       } else if (isDefaultValue(exp)) {
                           Expression expression = ((J.Assignment) exp).getAssignment();
                           addSchema(schemaTpl, "defaultValue");
-                          args.add(expression);
+                          schemaArgs.add(expression);
                       } else {
                           tpl.append("#{any()}, ");
                           args.add(exp);
@@ -86,6 +87,7 @@ public class MigrateApiImplicitParam extends Recipe {
                       }
                       schemaTpl.append(")");
                       tpl.append(", ").append(schemaTpl);
+                      args.addAll(schemaArgs);
                   }
                   anno = JavaTemplate.builder(tpl.toString())
                     .imports(FQN_SCHEMA)
