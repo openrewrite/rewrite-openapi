@@ -132,6 +132,10 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.Operation
       oldAttributeName: "value"
       newAttributeName: "summary"
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      oldAttributeName: "nickname"
+      newAttributeName: "operationId"
   - org.openrewrite.java.RemoveAnnotationAttribute:
       annotationType: io.swagger.v3.oas.annotations.Operation
       attributeName: response
@@ -243,6 +247,10 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.media.Schema
       newAttributeName: type
       oldAttributeName: dataType
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.media.Schema
+      newAttributeName: allowEmptyValue
+      oldAttributeName: nullable
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
