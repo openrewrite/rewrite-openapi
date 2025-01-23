@@ -26,7 +26,7 @@ import static java.util.Collections.emptyMap;
 
 @UtilityClass
 class AnnotationUtils {
-    public static Map<String, Expression> extractAnnotationArgumentAssignments(J.Annotation annotation) {
+    public static Map<String, Expression> extractArgumentAssignments(J.Annotation annotation) {
         if (annotation.getArguments() == null ||
                 annotation.getArguments().isEmpty() ||
                 annotation.getArguments().get(0) instanceof J.Empty) {

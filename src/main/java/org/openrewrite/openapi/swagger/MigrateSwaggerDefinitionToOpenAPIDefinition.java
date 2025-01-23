@@ -57,7 +57,7 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                         J.Annotation ann = super.visitAnnotation(annotation, ctx);
 
                         if (annotationMatcher.matches(ann)) {
-                            Map<String, Expression> args = AnnotationUtils.extractAnnotationArgumentAssignments(ann);
+                            Map<String, Expression> args = AnnotationUtils.extractArgumentAssignments(ann);
 
                             StringBuilder tpl = new StringBuilder("@OpenAPIDefinition(\n");
                             List<Expression> tplArgs = new ArrayList<>();
