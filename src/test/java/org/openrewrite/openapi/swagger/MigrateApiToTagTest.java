@@ -53,6 +53,31 @@ class MigrateApiToTagTest implements RewriteTest {
         );
     }
 
+    // Hidden is supported in swagger-annotations-2.+
+    @DocumentExample
+    @Test
+    void singleHidden() {
+        rewriteRun(
+            //language=java
+            java(
+                """
+                  import io.swagger.annotations.Api;
+
+                  @Api(value = "Bar", hidden = true)
+                  class Example {}
+                  """,
+                """
+                  import io.swagger.v3.oas.annotations.Hidden;
+                  import io.swagger.v3.oas.annotations.tags.Tag;
+
+                  @Tag(name = "Bar")
+                  @Hidden
+                  class Example {}
+                  """
+            )
+        );
+    }
+
     @Test
     void singleTagAsArray() {
         rewriteRun(
@@ -103,13 +128,15 @@ class MigrateApiToTagTest implements RewriteTest {
             """
               import io.swagger.annotations.Api;
 
-              @Api(tags = {"foo", "bar"}, value = "Ignore", description = "Desc")
+              @Api(tags = {"foo", "bar"}, value = "Ignore", description = "Desc", hidden = true)
               class Example {}
               """,
             """
+              import io.swagger.v3.oas.annotations.Hidden;
               import io.swagger.v3.oas.annotations.tags.Tag;
               import io.swagger.v3.oas.annotations.tags.Tags;
 
+              @Hidden
               @Tags({
                       @Tag(name = "foo", description = "Desc"),
                       @Tag(name = "bar", description = "Desc")
