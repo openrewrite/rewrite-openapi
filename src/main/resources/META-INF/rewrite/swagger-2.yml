@@ -247,6 +247,10 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.media.Schema
       newAttributeName: type
       oldAttributeName: dataType
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.media.Schema
+      newAttributeName: allowEmptyValue
+      oldAttributeName: nullable
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
