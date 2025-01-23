@@ -39,7 +39,20 @@ public class MigrateApiToTag extends Recipe {
     private static final String FQN_TAG = "io.swagger.v3.oas.annotations.tags.Tag";
     private static final String FQN_TAGS = "io.swagger.v3.oas.annotations.tags.Tags";
     private static final String FQN_HIDDEN = "io.swagger.v3.oas.annotations.Hidden";
-    private static final String KEY_HIDDEN = "Hidden";
+
+    @Language("java")
+    private static final String HIDDEN_CLASS =
+        "package io.swagger.v3.oas.annotations;\n" +
+                "import java.lang.annotation.Retention;\n" +
+                "import java.lang.annotation.RetentionPolicy;\n" +
+                "import java.lang.annotation.Target;\n" +
+                "import static java.lang.annotation.ElementType.ANNOTATION_TYPE;\n" +
+                "import static java.lang.annotation.ElementType.TYPE;\n" +
+                "import static java.lang.annotation.ElementType.FIELD;\n" +
+                "import static java.lang.annotation.ElementType.METHOD;\n" +
+                "@Target({METHOD, TYPE, FIELD, ANNOTATION_TYPE})\n" +
+                "@Retention(RetentionPolicy.RUNTIME)\n" +
+                "public @interface Hidden {}";
 
     @Language("java")
     private static final String TAGS_CLASS =
@@ -123,7 +136,7 @@ public class MigrateApiToTag extends Recipe {
                             maybeAddImport(FQN_HIDDEN, false);
                             cd = JavaTemplate.builder("@Hidden")
                                 .imports(FQN_HIDDEN)
-                                .javaParser(JavaParser.fromJavaVersion())
+                                .javaParser(JavaParser.fromJavaVersion().dependsOn(HIDDEN_CLASS))
                                 .build()
                                 .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)));
                         }

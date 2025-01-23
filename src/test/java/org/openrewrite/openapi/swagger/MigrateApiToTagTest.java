@@ -59,19 +59,18 @@ class MigrateApiToTagTest implements RewriteTest {
     @Test
     void singleHidden() {
         rewriteRun(
-            spec -> spec.afterTypeValidationOptions(TypeValidation.builder().identifiers(false).build()),
             //language=java
             java(
                 """
                   import io.swagger.annotations.Api;
-    
+
                   @Api(value = "Bar", hidden = true)
                   class Example {}
                   """,
                 """
                   import io.swagger.v3.oas.annotations.Hidden;
                   import io.swagger.v3.oas.annotations.tags.Tag;
-    
+
                   @Tag(name = "Bar")
                   @Hidden
                   class Example {}
@@ -125,13 +124,12 @@ class MigrateApiToTagTest implements RewriteTest {
     @Test
     void multipleTags() {
         rewriteRun(
-          spec -> spec.afterTypeValidationOptions(TypeValidation.builder().identifiers(false).build()),
           //language=java
           java(
             """
               import io.swagger.annotations.Api;
 
-              @Api(tags = {"foo", "bar"}, value = "Ignore", description = "Desc", hidden=true)
+              @Api(tags = {"foo", "bar"}, value = "Ignore", description = "Desc", hidden = true)
               class Example {}
               """,
             """
