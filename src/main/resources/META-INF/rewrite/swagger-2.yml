@@ -136,6 +136,10 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.Operation
       oldAttributeName: "nickname"
       newAttributeName: "operationId"
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.Operation
+      oldAttributeName: "httpMethod"
+      newAttributeName: "method"
   - org.openrewrite.java.RemoveAnnotationAttribute:
       annotationType: io.swagger.v3.oas.annotations.Operation
       attributeName: response
