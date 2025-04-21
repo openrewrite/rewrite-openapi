@@ -1,0 +1,116 @@
+# Copyright 2025 the original author or authors.
+# <p>
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# https://www.apache.org/licenses/LICENSE-2.0
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
+examples:
+- description: ''
+  sources:
+  - before: |
+      import io.swagger.annotations.ApiResponse;
+
+      class A {
+          @ApiResponse(code = 200, message = "OK")
+          void method() {}
+      }
+    after: |
+      import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+      class A {
+          @ApiResponse(responseCode = "200", description = "OK")
+          void method() {}
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.openapi.swagger.MigrateApiToTag
+examples:
+- description: ''
+  sources:
+  - before: |
+      import io.swagger.annotations.Api;
+
+      @Api(value = "Bar")
+      class Example {}
+    after: |
+      import io.swagger.v3.oas.annotations.tags.Tag;
+
+      @Tag(name = "Bar")
+      class Example {}
+    language: java
+- description: ''
+  sources:
+  - before: |
+      import io.swagger.annotations.Api;
+
+      @Api(value = "Bar", hidden = true)
+      class Example {}
+    after: |
+      import io.swagger.v3.oas.annotations.Hidden;
+      import io.swagger.v3.oas.annotations.tags.Tag;
+
+      @Tag(name = "Bar")
+      @Hidden
+      class Example {}
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.openapi.swagger.SwaggerToOpenAPI
+examples:
+- description: ''
+  sources:
+  - before: |
+      import io.swagger.annotations.ApiModel;
+      import io.swagger.annotations.ApiModelProperty;
+
+      @ApiModel(value="ApiModelExampleValue", description="ApiModelExampleDescription")
+      class Example {
+        @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
+        private String example;
+      }
+    after: |
+      import io.swagger.v3.oas.annotations.media.Schema;
+
+      @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
+      class Example {
+        @Schema(description = "ApiModelPropertyExampleValue")
+        private String example;
+      }
+    language: java
+  - before: |
+      <project>
+        <modelVersion>4.0.0</modelVersion>
+        <groupId>com.example</groupId>
+        <artifactId>demo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <dependencies>
+          <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>1.6.14</version>
+          </dependency>
+          <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-models</artifactId>
+            <version>1.6.14</version>
+          </dependency>
+          <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-core</artifactId>
+            <version>1.6.14</version>
+          </dependency>
+        </dependencies>
+      </project>
+    path: pom.xml
+    language: xml
