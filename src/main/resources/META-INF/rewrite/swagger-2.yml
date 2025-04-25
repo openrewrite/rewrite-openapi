@@ -41,9 +41,6 @@ recipeList:
   # https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations
   # https://springdoc.org/#migrating-from-springfox
   - org.openrewrite.java.ChangeType:
-      oldFullyQualifiedTypeName: io.swagger.annotations.Tag
-      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.tags.Tag
-  - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.Info
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.info.Info
   - org.openrewrite.java.ChangeType:
