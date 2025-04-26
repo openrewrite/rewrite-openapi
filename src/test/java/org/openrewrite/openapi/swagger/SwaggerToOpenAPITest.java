@@ -33,13 +33,6 @@ class SwaggerToOpenAPITest implements RewriteTest {
           .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+", "rs-api"));
     }
 
-    @Test
-    void loadYamlRecipesToTriggerValidation() {
-        rewriteRun(
-          spec -> spec.printRecipe(() -> System.out::println)
-        );
-    }
-
     @DocumentExample
     @Test
     void shouldChangeSwaggerArtifacts() {
@@ -124,6 +117,13 @@ class SwaggerToOpenAPITest implements RewriteTest {
               .get()
               .group(1)))
           )
+        );
+    }
+
+    @Test
+    void loadYamlRecipesToTriggerValidation() {
+        rewriteRun(
+          spec -> spec.printRecipe(() -> System.out::println)
         );
     }
 
