@@ -152,7 +152,7 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
 displayName: Migrate from `@ApiResponses` to `@ApiResponses`
 description: Changes the namespace of the `@ApiResponses` and `@ApiResponse` annotations and converts its attributes
-  (ex. code -> responseCode, message -> description).
+  (ex. code -> responseCode, message -> description, response -> content).
 tags:
   - swagger
   - openapi
@@ -172,6 +172,7 @@ recipeList:
       oldAttributeName: "message"
       newAttributeName: "description"
   - org.openrewrite.openapi.swagger.ConvertApiResponseCodesToStrings
+  - org.openrewrite.openapi.swagger.ConvertApiResponseToContent
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
