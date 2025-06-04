@@ -39,7 +39,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
             """
             class ResponseEntity<T> {}
             class User {}
-            """),
+            """
+          ),
           java(
             """
               import io.swagger.annotations.ApiResponse;
@@ -73,7 +74,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
             """
             class ResponseEntity<T> {}
             class User {}
-            """),
+            """
+          ),
           java(
             """
               import io.swagger.v3.oas.annotations.media.Content;
