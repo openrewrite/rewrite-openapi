@@ -35,7 +35,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void convertApiResponseCodesToStrings() {
         //language=java
         rewriteRun(
-          java("""
+          java(
+            """
             class ResponseEntity<T> {}
             class User {}
             """),
@@ -68,7 +69,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void noChangeOnAlreadyConverted() {
         //language=java
         rewriteRun(
-          java("""
+          java(
+            """
             class ResponseEntity<T> {}
             class User {}
             """),
