@@ -77,7 +77,7 @@ public class ConvertApiResponseToContent extends Recipe {
                                         .imports(FQN_CONTENT, FQN_SCHEMA)
                                         .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
                                         .build()
-                                        .apply(updateCursor(an), an.getCoordinates().replaceArguments(), ListUtils.concat(maybeArgsWithoutResponse, contentClass.get()).toArray());
+                                        .apply(getCursor(), an.getCoordinates().replaceArguments(), ListUtils.concat(maybeArgsWithoutResponse, contentClass.get()).toArray());
                                 maybeAddImport(FQN_CONTENT);
                                 maybeAddImport(FQN_SCHEMA);
                                 return maybeAutoFormat(annotation, an, ctx, getCursor().getParentTreeCursor());
