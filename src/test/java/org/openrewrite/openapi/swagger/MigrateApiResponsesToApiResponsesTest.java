@@ -82,7 +82,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
 
               class A {
                   @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
-                  ResponseEntity<User> method() {}
+                  ResponseEntity<User> method() { return null; }
               }
               """
           )
