@@ -27,7 +27,16 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses")
-          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+"));
+          .parser(JavaParser.fromJavaVersion()
+            .classpath("swagger-annotations-1.+", "swagger-annotations-2.+")
+            .dependsOn(
+              """
+                package org.springframework.http;
+                public class ResponseEntity<T> {}
+                """,
+              "class User {}"
+            )
+          );
     }
 
     @Test
@@ -35,12 +44,6 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void convertApiResponseCodesToStrings() {
         //language=java
         rewriteRun(
-          java(
-            """
-            class ResponseEntity<T> {}
-            class User {}
-            """
-          ),
           java(
             """
               import io.swagger.annotations.ApiResponse;
@@ -72,15 +75,10 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
         rewriteRun(
           java(
             """
-            class ResponseEntity<T> {}
-            class User {}
-            """
-          ),
-          java(
-            """
               import io.swagger.v3.oas.annotations.media.Content;
               import io.swagger.v3.oas.annotations.media.Schema;
               import io.swagger.v3.oas.annotations.responses.ApiResponse;
+              import org.springframework.http.ResponseEntity;
 
               class A {
                   @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
