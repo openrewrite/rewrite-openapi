@@ -35,8 +35,10 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void convertApiResponseCodesToStrings() {
         //language=java
         rewriteRun(
-          java("""
-            class ResponseEntity<T> {}
+          java(
+                """
+            """
+          ),
             class User {}
             """),
           java(
@@ -68,8 +70,10 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void noChangeOnAlreadyConverted() {
         //language=java
         rewriteRun(
-          java("""
-            class ResponseEntity<T> {}
+          java(
+                """
+            """
+          ),
             class User {}
             """),
           java(
