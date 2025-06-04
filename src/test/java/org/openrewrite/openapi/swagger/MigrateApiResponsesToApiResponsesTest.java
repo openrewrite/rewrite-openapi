@@ -23,7 +23,7 @@ import org.openrewrite.test.RewriteTest;
 
 import static org.openrewrite.java.Assertions.java;
 
-class ConvertApiResponseCodesToStringsTest implements RewriteTest {
+class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses")
@@ -33,23 +33,33 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
     @Test
     @DocumentExample
     void convertApiResponseCodesToStrings() {
+        //language=java
         rewriteRun(
-          //language=java
+          java(
+            """
+            class ResponseEntity<T> {}
+            class User {}
+            """
+          ),
           java(
             """
               import io.swagger.annotations.ApiResponse;
-              
+              import org.springframework.http.ResponseEntity;
+
               class A {
-                  @ApiResponse(code = 200, message = "OK")
-                  void method() {}
+                  @ApiResponse(code = 200, message = "OK", response = User.class)
+                  ResponseEntity<User> method() { return null; }
               }
               """,
             """
+              import io.swagger.v3.oas.annotations.media.Content;
+              import io.swagger.v3.oas.annotations.media.Schema;
               import io.swagger.v3.oas.annotations.responses.ApiResponse;
-              
+              import org.springframework.http.ResponseEntity;
+
               class A {
-                  @ApiResponse(responseCode = "200", description = "OK")
-                  void method() {}
+                  @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
+                  ResponseEntity<User> method() { return null; }
               }
               """
           )
@@ -58,15 +68,23 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
 
     @Test
     void noChangeOnAlreadyConverted() {
+        //language=java
         rewriteRun(
-          //language=java
           java(
             """
+            class ResponseEntity<T> {}
+            class User {}
+            """
+          ),
+          java(
+            """
+              import io.swagger.v3.oas.annotations.media.Content;
+              import io.swagger.v3.oas.annotations.media.Schema;
               import io.swagger.v3.oas.annotations.responses.ApiResponse;
-              
+
               class A {
-                  @ApiResponse(responseCode = "200", description = "OK")
-                  void method() {}
+                  @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
+                  ResponseEntity<User> method() { return null; }
               }
               """
           )
