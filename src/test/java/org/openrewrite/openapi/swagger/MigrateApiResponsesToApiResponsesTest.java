@@ -39,8 +39,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
           );
     }
 
-    @Test
     @DocumentExample
+    @Test
     void convertApiResponseCodesToStrings() {
         //language=java
         rewriteRun(
