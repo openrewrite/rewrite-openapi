@@ -54,7 +54,6 @@ class MigrateApiToTagTest implements RewriteTest {
     }
 
     // Hidden is supported in swagger-annotations-2.+
-    @DocumentExample
     @Test
     void singleHidden() {
         rewriteRun(
