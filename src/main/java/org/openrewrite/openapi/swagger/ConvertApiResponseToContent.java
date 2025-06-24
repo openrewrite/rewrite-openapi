@@ -104,7 +104,7 @@ public class ConvertApiResponseToContent extends Recipe {
 							);
 						// 2) map case: wrap Schema in Schema
 						} else if ("Map".equals(type)) {
-							inner = "schema = @Schema(type = \"object\", additionalProperties = @Schema(implementation = #{any()})))";
+							inner = "schema = @Schema(type = \"object\", additionalPropertiesSchema = #{any()}))";
 						// 3) absent responseContainer case
 						} else {
 							inner = "schema = @Schema(implementation = #{any()}))";

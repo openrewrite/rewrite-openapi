@@ -129,6 +129,35 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
 		);
 	}
 
+	@Test
+	void convertApiResponseMapContainers() {
+		//language=java
+		rewriteRun(
+		  java(
+			"""
+              import io.swagger.annotations.ApiResponse;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(code = 200, message = "OK", responseContainer = "Map", response = User.class)
+                  ResponseEntity<User> method() { return null; }
+              }
+              """,
+			"""
+              import io.swagger.v3.oas.annotations.media.Content;
+              import io.swagger.v3.oas.annotations.media.Schema;
+              import io.swagger.v3.oas.annotations.responses.ApiResponse;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(type = "object", additionalPropertiesSchema = User.class)))
+                  ResponseEntity<User> method() { return null; }
+              }
+              """
+		  )
+		);
+	}
+
     @Test
     void noChangeOnAlreadyConverted() {
         //language=java
