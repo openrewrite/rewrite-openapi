@@ -29,6 +29,8 @@ import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,6 +39,7 @@ public class ConvertApiResponseToContent extends Recipe {
     private static final AnnotationMatcher ANNOTATION_MATCHER = new AnnotationMatcher("@io.swagger.v3.oas.annotations.responses.ApiResponse");
     private static final String FQN_CONTENT = "io.swagger.v3.oas.annotations.media.Content";
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
+	private static final String FQN_ARRAYSCHEMA = "io.swagger.v3.oas.annotations.media.ArraySchema";
 
     @Override
     public String getDisplayName() {
@@ -53,38 +56,81 @@ public class ConvertApiResponseToContent extends Recipe {
         return Preconditions.check(
                 new UsesType<>("io.swagger.v3.oas.annotations.responses.ApiResponse", true),
                 new JavaIsoVisitor<ExecutionContext>() {
-                    @Override
-                    public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                        J.Annotation an = super.visitAnnotation(annotation, ctx);
-                        if (ANNOTATION_MATCHER.matches(an) && an.getArguments() != null) {
-                            AtomicReference<J.FieldAccess> contentClass = new AtomicReference<>();
-                            List<Expression> maybeArgsWithoutResponse = ListUtils.map(an.getArguments(), arg -> {
-                                if (arg instanceof J.Assignment) {
-                                    J.Assignment assignment = (J.Assignment) arg;
-                                    if (assignment.getVariable() instanceof J.Identifier &&
-                                            "response".equals(((J.Identifier) assignment.getVariable()).getSimpleName()) &&
-                                            assignment.getAssignment() instanceof J.FieldAccess) {
-                                        contentClass.set((J.FieldAccess) assignment.getAssignment());
-                                        return null;
-                                    }
-                                }
-                                return arg;
-                            });
+					@Override
+					public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+						J.Annotation an = super.visitAnnotation(annotation, ctx);
+						if (!ANNOTATION_MATCHER.matches(an) || an.getArguments() == null) {
+							return an;
+						}
+						AtomicReference<J.FieldAccess> contentClass = new AtomicReference<>();
+						AtomicReference<J.Literal> containerType = new AtomicReference<>();
 
-                            if (an.getArguments().size() > maybeArgsWithoutResponse.size()) {
-                                String arguments = StringUtils.repeat("#{any()}, ", maybeArgsWithoutResponse.size());
-                                an = JavaTemplate.builder(arguments + "content = @Content(mediaType = \"application/json\", schema = @Schema(implementation = #{any()}))")
-                                        .imports(FQN_CONTENT, FQN_SCHEMA)
-                                        .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
-                                        .build()
-                                        .apply(getCursor(), an.getCoordinates().replaceArguments(), ListUtils.concat(maybeArgsWithoutResponse, contentClass.get()).toArray());
-                                maybeAddImport(FQN_CONTENT);
-                                maybeAddImport(FQN_SCHEMA);
-                                return maybeAutoFormat(annotation, an, ctx, getCursor().getParentTreeCursor());
-                            }
-                        }
-                        return an;
-                    }
-                });
+						List<Expression> maybeArgsWithoutResponse = ListUtils.map(an.getArguments(), arg -> {
+							if (!(arg instanceof J.Assignment)) {
+								return arg;
+							}
+							J.Assignment assign = (J.Assignment) arg;
+							if (!(assign.getVariable() instanceof J.Identifier)) {
+								return arg;
+							}
+							String name = ((J.Identifier) assign.getVariable()).getSimpleName();
+							Expression assignment = assign.getAssignment();
+							if ("response".equals(name) && assignment instanceof J.FieldAccess) {
+								contentClass.set((J.FieldAccess) assignment);
+								return null;
+							}
+							if ("responseContainer".equals(name) && assignment instanceof J.Literal) {
+								containerType.set((J.Literal) assignment);
+								return null;
+							}
+							return arg;
+						});
+
+						if (maybeArgsWithoutResponse.size() >= an.getArguments().size()) {
+							return an;
+						}
+						String arguments = StringUtils.repeat("#{any()}, ", maybeArgsWithoutResponse.size());
+						String inner;
+						String type = containerType.get() != null ? containerType.get().toString() : null;
+						List<String> imports = new ArrayList<>();
+						imports.add(FQN_CONTENT);
+						imports.add(FQN_SCHEMA);
+						// 1) list/set case: wrap in ArraySchema
+						if (Arrays.asList("List", "Set").contains(type)) {
+							imports.add(FQN_ARRAYSCHEMA);
+							inner = String.format(
+								"array = @ArraySchema(uniqueItems = %b, schema = @Schema(implementation = #{any()})))",
+								"Set".equals(type)
+							);
+						// 2) map case: wrap Schema in Schema
+						} else if ("Map".equals(type)) {
+							inner = "schema = @Schema(type = \"object\", additionalProperties = @Schema(implementation = #{any()})))";
+						// 3) absent responseContainer case
+						} else {
+							inner = "schema = @Schema(implementation = #{any()}))";
+						}
+						String tpl = "content = @Content(mediaType = \"application/json\", " + inner;
+						an = JavaTemplate.builder(arguments + tpl)
+							.imports(imports.toArray(new String[0]))
+							.javaParser(
+								JavaParser.fromJavaVersion()
+									.classpath("swagger-annotations")
+							)
+							.build()
+							.apply(
+								getCursor(),
+								an.getCoordinates().replaceArguments(),
+								ListUtils.concat(maybeArgsWithoutResponse, contentClass.get()).toArray()
+							);
+						maybeAddImport(FQN_CONTENT);
+						maybeAddImport(FQN_SCHEMA);
+						if (imports.contains(FQN_ARRAYSCHEMA)) {
+							maybeAddImport(FQN_ARRAYSCHEMA);
+						}
+
+						return maybeAutoFormat(annotation, an, ctx, getCursor().getParentTreeCursor());
+					}
+               }
+        );
     }
 }
