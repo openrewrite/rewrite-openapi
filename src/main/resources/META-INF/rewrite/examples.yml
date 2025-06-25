@@ -53,21 +53,6 @@ examples:
       @Tag(name = "Bar")
       class Example {}
     language: java
-- description: ''
-  sources:
-  - before: |
-      import io.swagger.annotations.Api;
-
-      @Api(value = "Bar", hidden = true)
-      class Example {}
-    after: |
-      import io.swagger.v3.oas.annotations.Hidden;
-      import io.swagger.v3.oas.annotations.tags.Tag;
-
-      @Tag(name = "Bar")
-      @Hidden
-      class Example {}
-    language: java
 ---
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.SwaggerToOpenAPI
