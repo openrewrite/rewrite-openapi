@@ -39,8 +39,8 @@ public class MigrateApiModelToSchema extends Recipe {
     private static final String API_MODEL_FQN = "io.swagger.annotations.ApiModel";
     private static final String SCHEMA_FQN = "io.swagger.v3.oas.annotations.media.Schema";
 
-    private final AnnotationMatcher apiModelMatcher = new AnnotationMatcher(API_MODEL_FQN);
-    private final AnnotationMatcher schemaMatcher = new AnnotationMatcher(SCHEMA_FQN);
+    private static final AnnotationMatcher apiModelMatcher = new AnnotationMatcher(API_MODEL_FQN);
+    private static final AnnotationMatcher schemaMatcher = new AnnotationMatcher(SCHEMA_FQN);
 
     @Override
     public String getDisplayName() {
