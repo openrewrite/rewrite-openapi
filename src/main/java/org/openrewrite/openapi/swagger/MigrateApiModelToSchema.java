@@ -30,15 +30,19 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.Space;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
-import static java.util.Collections.emptyMap;
+import static org.openrewrite.openapi.swagger.AnnotationUtils.extractArgumentAssignments;
 
 public class MigrateApiModelToSchema extends Recipe {
 
     private static final String API_MODEL_FQN = "io.swagger.annotations.ApiModel";
     private static final String SCHEMA_FQN = "io.swagger.v3.oas.annotations.media.Schema";
+
+    private final AnnotationMatcher apiModelMatcher = new AnnotationMatcher(API_MODEL_FQN);
+    private final AnnotationMatcher schemaMatcher = new AnnotationMatcher(SCHEMA_FQN);
+    private final TreeVisitor<?, ExecutionContext> changeAttribute = new ChangeAnnotationAttributeName(API_MODEL_FQN, "value", "name").getVisitor();
+    private final TreeVisitor<?, ExecutionContext> changeType = new ChangeType(API_MODEL_FQN, SCHEMA_FQN, true).getVisitor();
 
     @Override
     public String getDisplayName() {
@@ -55,12 +59,6 @@ public class MigrateApiModelToSchema extends Recipe {
         return Preconditions.check(
             new UsesType<>(API_MODEL_FQN, false),
             new JavaIsoVisitor<ExecutionContext>() {
-                private final AnnotationMatcher apiModelMatcher = new AnnotationMatcher(API_MODEL_FQN);
-                private final AnnotationMatcher schemaMatcher = new AnnotationMatcher(SCHEMA_FQN);
-
-                private final TreeVisitor<?, ExecutionContext> changeAttribute = new ChangeAnnotationAttributeName(API_MODEL_FQN, "value", "name").getVisitor();
-                private final TreeVisitor<?, ExecutionContext> changeType = new ChangeType(API_MODEL_FQN, SCHEMA_FQN, true).getVisitor();
-
                 @Override
                 public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                     if (getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
@@ -95,38 +93,20 @@ public class MigrateApiModelToSchema extends Recipe {
                     boolean schemaAnnotationAlreadyPresent = getCursor().getMessage(SCHEMA_FQN) != null;
 
                     cd = cd.withLeadingAnnotations(ListUtils.map(cd.getLeadingAnnotations(), annotation -> {
-                        if (annotation == null || (schemaAnnotationAlreadyPresent && apiModelMatcher.matches(annotation))) {
+                        if (schemaAnnotationAlreadyPresent && apiModelMatcher.matches(annotation)) {
                             return null;
                         } else if (schemaMatcher.matches(annotation)) {
-                            AnnotationUtils.extractArgumentAssignments(annotation).keySet().forEach(annotationAssignments::remove);
+                            AnnotationUtils.extractArgumentAssignedExpressions(annotation).keySet().forEach(annotationAssignments::remove);
                             if (!annotationAssignments.isEmpty()) {
                                 return autoFormat(annotation.withArguments(ListUtils.concatAll(annotation.getArguments(), new ArrayList<>(annotationAssignments.values()))), ctx);
                             }
                         }
                         return annotation;
                     }));
-                    cd = cd.withLeadingAnnotations(ListUtils.mapFirst(cd.getLeadingAnnotations(), annotation -> annotation == null ? null : annotation.withPrefix(Space.EMPTY)));
+                    cd = cd.withLeadingAnnotations(ListUtils.mapFirst(cd.getLeadingAnnotations(), annotation -> annotation.withPrefix(Space.EMPTY)));
                     return cd;
                 }
             }
         );
-    }
-
-    //TODO as we have a AnnotationUtils, I feel we should move it there. The other one unwraps the assignments to their assigned value causing it to force me to build them again if I would use that one.
-    private static Map<String, J.Assignment> extractArgumentAssignments(J.Annotation annotation) {
-        if (annotation.getArguments() == null ||
-                annotation.getArguments().isEmpty() ||
-                annotation.getArguments().get(0) instanceof J.Empty) {
-            return emptyMap();
-        }
-        Map<String, J.Assignment> map = new HashMap<>();
-        for (Expression expression : annotation.getArguments()) {
-            if (expression instanceof J.Assignment) {
-                J.Assignment a = (J.Assignment) expression;
-                String simpleName = ((J.Identifier) a.getVariable()).getSimpleName();
-                map.put(simpleName, a);
-            }
-        }
-        return map;
     }
 }
