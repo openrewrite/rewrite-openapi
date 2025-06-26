@@ -41,8 +41,6 @@ public class MigrateApiModelToSchema extends Recipe {
 
     private final AnnotationMatcher apiModelMatcher = new AnnotationMatcher(API_MODEL_FQN);
     private final AnnotationMatcher schemaMatcher = new AnnotationMatcher(SCHEMA_FQN);
-    private final TreeVisitor<?, ExecutionContext> changeAttribute = new ChangeAnnotationAttributeName(API_MODEL_FQN, "value", "name").getVisitor();
-    private final TreeVisitor<?, ExecutionContext> changeType = new ChangeType(API_MODEL_FQN, SCHEMA_FQN, true).getVisitor();
 
     @Override
     public String getDisplayName() {
@@ -64,8 +62,8 @@ public class MigrateApiModelToSchema extends Recipe {
                     if (getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
                         annotation = super.visitAnnotation(annotation, ctx);
                         if (apiModelMatcher.matches(annotation)) {
-                            doAfterVisit(changeAttribute);
-                            doAfterVisit(changeType);
+                            doAfterVisit(new ChangeAnnotationAttributeName(API_MODEL_FQN, "value", "name").getVisitor());
+                            doAfterVisit(new ChangeType(API_MODEL_FQN, SCHEMA_FQN, true).getVisitor());
 
                             Map<String, J.Assignment> annotationAssignments = extractArgumentAssignments(annotation);
                             if (annotationAssignments.containsKey("value")) {
