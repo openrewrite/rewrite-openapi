@@ -30,6 +30,7 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.Space;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.openrewrite.openapi.swagger.AnnotationUtils.extractArgumentAssignments;
@@ -39,8 +40,8 @@ public class MigrateApiModelToSchema extends Recipe {
     private static final String API_MODEL_FQN = "io.swagger.annotations.ApiModel";
     private static final String SCHEMA_FQN = "io.swagger.v3.oas.annotations.media.Schema";
 
-    private static final AnnotationMatcher apiModelMatcher = new AnnotationMatcher(API_MODEL_FQN);
-    private static final AnnotationMatcher schemaMatcher = new AnnotationMatcher(SCHEMA_FQN);
+    private static final AnnotationMatcher API_MODEL_MATCHER = new AnnotationMatcher(API_MODEL_FQN);
+    private static final AnnotationMatcher SCHEMA_MATCHER = new AnnotationMatcher(SCHEMA_FQN);
 
     @Override
     public String getDisplayName() {
@@ -61,7 +62,7 @@ public class MigrateApiModelToSchema extends Recipe {
                 public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                     if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
                         annotation = super.visitAnnotation(annotation, ctx);
-                        if (apiModelMatcher.matches(annotation)) {
+                        if (API_MODEL_MATCHER.matches(annotation)) {
                             doAfterVisit(new ChangeAnnotationAttributeName(API_MODEL_FQN, "value", "name").getVisitor());
                             doAfterVisit(new ChangeType(API_MODEL_FQN, SCHEMA_FQN, true).getVisitor());
 
@@ -71,7 +72,7 @@ public class MigrateApiModelToSchema extends Recipe {
                                 annotationAssignments.put("name", value.withVariable(((J.Identifier) value.getVariable()).withSimpleName("name")));
                             }
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, API_MODEL_FQN, annotationAssignments);
-                        } else if (schemaMatcher.matches(annotation)) {
+                        } else if (SCHEMA_MATCHER.matches(annotation)) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, SCHEMA_FQN, "USING SCHEMA ALREADY");
                         }
                     }
@@ -90,19 +91,18 @@ public class MigrateApiModelToSchema extends Recipe {
 
                     boolean schemaAnnotationAlreadyPresent = getCursor().getMessage(SCHEMA_FQN) != null;
 
-                    cd = cd.withLeadingAnnotations(ListUtils.map(cd.getLeadingAnnotations(), annotation -> {
-                        if (schemaAnnotationAlreadyPresent && apiModelMatcher.matches(annotation)) {
+                    List<J.Annotation> newLeading = ListUtils.map(cd.getLeadingAnnotations(), annotation -> {
+                        if (schemaAnnotationAlreadyPresent && API_MODEL_MATCHER.matches(annotation)) {
                             return null;
-                        } else if (schemaMatcher.matches(annotation)) {
+                        } else if (SCHEMA_MATCHER.matches(annotation)) {
                             AnnotationUtils.extractArgumentAssignedExpressions(annotation).keySet().forEach(annotationAssignments::remove);
                             if (!annotationAssignments.isEmpty()) {
                                 return autoFormat(annotation.withArguments(ListUtils.concatAll(annotation.getArguments(), new ArrayList<>(annotationAssignments.values()))), ctx);
                             }
                         }
                         return annotation;
-                    }));
-                    cd = cd.withLeadingAnnotations(ListUtils.mapFirst(cd.getLeadingAnnotations(), annotation -> annotation.withPrefix(Space.EMPTY)));
-                    return cd;
+                    });
+                    return cd.withLeadingAnnotations(ListUtils.mapFirst(newLeading, annotation -> annotation.withPrefix(Space.EMPTY)));
                 }
             }
         );
