@@ -59,7 +59,7 @@ public class MigrateApiModelToSchema extends Recipe {
             new JavaIsoVisitor<ExecutionContext>() {
                 @Override
                 public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
-                    if (getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
+                    if (getCursor().getParent() != null && getCursor().getParent().getValue() instanceof J.ClassDeclaration) {
                         annotation = super.visitAnnotation(annotation, ctx);
                         if (apiModelMatcher.matches(annotation)) {
                             doAfterVisit(new ChangeAnnotationAttributeName(API_MODEL_FQN, "value", "name").getVisitor());
