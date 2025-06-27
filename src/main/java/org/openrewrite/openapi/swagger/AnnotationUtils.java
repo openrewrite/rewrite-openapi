@@ -21,23 +21,31 @@ import org.openrewrite.java.tree.J;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import static java.util.Collections.emptyMap;
 
 @UtilityClass
 class AnnotationUtils {
-    public static Map<String, Expression> extractArgumentAssignments(J.Annotation annotation) {
+    public static Map<String, Expression> extractArgumentAssignedExpressions(J.Annotation annotation) {
+        return extractArguments(annotation, J.Assignment::getAssignment);
+    }
+
+    public static Map<String, J.Assignment> extractArgumentAssignments(J.Annotation annotation) {
+        return extractArguments(annotation, Function.identity());
+    }
+
+    private static <T> Map<String, T> extractArguments(J.Annotation annotation, Function<J.Assignment, T> extractor) {
         if (annotation.getArguments() == null ||
                 annotation.getArguments().isEmpty() ||
                 annotation.getArguments().get(0) instanceof J.Empty) {
             return emptyMap();
         }
-        Map<String, Expression> map = new HashMap<>();
+        Map<String, T> map = new HashMap<>();
         for (Expression expression : annotation.getArguments()) {
             if (expression instanceof J.Assignment) {
                 J.Assignment a = (J.Assignment) expression;
-                String simpleName = ((J.Identifier) a.getVariable()).getSimpleName();
-                map.put(simpleName, a.getAssignment());
+                map.put( ((J.Identifier) a.getVariable()).getSimpleName(), extractor.apply(a));
             }
         }
         return map;

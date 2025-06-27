@@ -108,7 +108,7 @@ public class MigrateApiToTag extends Recipe {
                         doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "hidden").getVisitor());
                         doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
 
-                        Map<String, Expression> annoAssignments = AnnotationUtils.extractArgumentAssignments(ann);
+                        Map<String, Expression> annoAssignments = AnnotationUtils.extractArgumentAssignedExpressions(ann);
                         if (annoAssignments.containsKey("tags") || annoAssignments.containsKey("hidden")) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annoAssignments);
                         }
