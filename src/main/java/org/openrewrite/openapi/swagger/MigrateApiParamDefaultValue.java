@@ -83,7 +83,7 @@ public class MigrateApiParamDefaultValue extends Recipe {
                         }
                         anno = JavaTemplate.builder(tpl.toString())
                                 .imports(FQN_SCHEMA)
-                                .javaParser(JavaParser.fromJavaVersion().classpath("swagger-annotations"))
+                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
                                 .build()
                                 .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
                         maybeAddImport(FQN_SCHEMA, false);
