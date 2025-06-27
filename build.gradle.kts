@@ -25,3 +25,7 @@ dependencies {
 
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
 }
+
+recipeDependencies {
+    parserClasspath("io.swagger.core.v3:swagger-annotations:2.2.20")
+}
