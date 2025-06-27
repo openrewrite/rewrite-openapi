@@ -11,8 +11,6 @@ dependencies {
     implementation("org.openrewrite:rewrite-java")
     implementation("org.openrewrite.recipe:rewrite-java-dependencies:$rewriteVersion")
 
-    runtimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
-
     testImplementation("org.openrewrite:rewrite-java-17")
     testImplementation("org.openrewrite:rewrite-test")
     testImplementation("org.openrewrite:rewrite-gradle")
@@ -24,4 +22,8 @@ dependencies {
     testRuntimeOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
 
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
+}
+
+recipeDependencies {
+    parserClasspath("io.swagger.core.v3:swagger-annotations:2.2.20")
 }
