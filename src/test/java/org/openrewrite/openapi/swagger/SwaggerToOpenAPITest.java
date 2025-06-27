@@ -30,7 +30,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.SwaggerToOpenAPI")
-          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+", "rs-api"));
+          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "rs-api"));
     }
 
     @DocumentExample
