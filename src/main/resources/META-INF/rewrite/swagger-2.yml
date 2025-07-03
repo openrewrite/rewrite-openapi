@@ -252,3 +252,24 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.media.Schema
       newAttributeName: type
       oldAttributeName: dataType
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.media.Schema
+      newAttributeName: nullable
+      oldAttributeName: allowEmptyValue
+
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.openapi.swagger.MigrateApiModelToSchema
+displayName: Migrate from `@ApiModel` to `@Schema`
+description: Converts the `@ApiModel` annotation to `@Schema` and converts the "value" attribute to "name".
+tags:
+  - swagger
+  - openapi
+recipeList:
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: io.swagger.annotations.ApiModel
+      newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.media.Schema
+  - org.openrewrite.java.ChangeAnnotationAttributeName:
+      annotationType: io.swagger.v3.oas.annotations.media.Schema
+      oldAttributeName: "value"
+      newAttributeName: "name"
