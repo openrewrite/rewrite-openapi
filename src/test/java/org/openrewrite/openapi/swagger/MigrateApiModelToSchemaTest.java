@@ -30,8 +30,8 @@ class MigrateApiModelToSchemaTest implements RewriteTest {
           .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "swagger-annotations-2.+", "rs-api"));
     }
 
-    @Test
     @DocumentExample
+    @Test
     void shouldChangeApiModelWithSchema() {
         rewriteRun(
           //language=java
