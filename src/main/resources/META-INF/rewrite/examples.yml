@@ -13,6 +13,31 @@
 # limitations under the License.
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.openapi.swagger.MigrateApiModelToSchema
+examples:
+- description: ''
+  sources:
+  - before: |
+      import io.swagger.annotations.ApiModel;
+      import io.swagger.annotations.ApiModelProperty;
+
+      @ApiModel(value="ApiModelExampleValue", description="ApiModelExampleDescription")
+      class Example {
+        @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
+        private String example;
+      }
+    after: |
+      import io.swagger.annotations.ApiModelProperty;
+      import io.swagger.v3.oas.annotations.media.Schema;
+
+      @Schema(name="ApiModelExampleValue", description="ApiModelExampleDescription")
+      class Example {
+        @ApiModelProperty(value = "ApiModelPropertyExampleValue", position = 1)
+        private String example;
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
 examples:
 - description: ''
