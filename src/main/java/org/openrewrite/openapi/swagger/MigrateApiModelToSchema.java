@@ -94,7 +94,8 @@ public class MigrateApiModelToSchema extends Recipe {
                     List<J.Annotation> newLeading = ListUtils.map(cd.getLeadingAnnotations(), annotation -> {
                         if (schemaAnnotationAlreadyPresent && API_MODEL_MATCHER.matches(annotation)) {
                             return null;
-                        } else if (SCHEMA_MATCHER.matches(annotation)) {
+                        }
+                        if (SCHEMA_MATCHER.matches(annotation)) {
                             AnnotationUtils.extractArgumentAssignedExpressions(annotation).keySet().forEach(annotationAssignments::remove);
                             if (!annotationAssignments.isEmpty()) {
                                 return autoFormat(annotation.withArguments(ListUtils.concatAll(annotation.getArguments(), new ArrayList<>(annotationAssignments.values()))), ctx);
