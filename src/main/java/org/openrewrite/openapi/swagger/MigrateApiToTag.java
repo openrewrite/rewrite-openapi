@@ -200,14 +200,11 @@ public class MigrateApiToTag extends Recipe {
 
                     // Add formatted template and imports
                     maybeAddImport(FQN_TAG);
-                    cd = JavaTemplate.builder(template.toString())
+                    return JavaTemplate.builder(template.toString())
                         .imports(FQN_TAG)
                         .javaParser(JavaParser.fromJavaVersion().dependsOn(TAGS_CLASS, TAG_CLASS))
                         .build()
                         .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
-
-
-                    return cd;
                 }
             }
         );
