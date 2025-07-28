@@ -23,6 +23,7 @@ import org.openrewrite.test.RewriteTest;
 
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.openrewrite.java.Assertions.java;
 import static org.openrewrite.maven.Assertions.pomXml;
 
@@ -116,6 +117,51 @@ class SwaggerToOpenAPITest implements RewriteTest {
               .findFirst()
               .get()
               .group(1)))
+          )
+        );
+    }
+
+    @Test
+    void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifacts() {
+        rewriteRun(
+          pomXml(
+            //language=xml
+            """
+              <project>
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>com.example</groupId>
+                <artifactId>demo-child</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <properties>
+                  <version.swagger>1.5.16</version.swagger>
+                </properties>
+                <dependencies>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                    <version>${version.swagger}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-models</artifactId>
+                    <version>${version.swagger}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-core</artifactId>
+                    <version>${version.swagger}</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """,
+            spec -> spec.after(actual ->
+                assertThat(actual)
+                  .containsPattern("<version.swagger>2.2.\\d+</version.swagger>")
+                  .containsPattern("<groupId>io.swagger.core.v3</groupId>")
+                  .doesNotContainPattern("<groupId>io.swagger</groupId>")
+                  .doesNotContainPattern("<!--~~")
+                  .actual()
+            )
           )
         );
     }
