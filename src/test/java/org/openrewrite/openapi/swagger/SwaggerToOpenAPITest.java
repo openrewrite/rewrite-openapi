@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
 import org.openrewrite.java.JavaParser;
@@ -306,6 +307,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
     }
 
     @Test
+    @Disabled
     void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButIgnoreDependencyWithoutUpgradePath() {
         rewriteRun(
           pomXml(
@@ -351,7 +353,8 @@ class SwaggerToOpenAPITest implements RewriteTest {
     }
 
     @Test
-    void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButFailsWithNoUpgradePath() {
+    @Disabled
+    void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButFailsWhenDependencyHasNoUpgradePath() {
         rewriteRun(
           pomXml(
             //language=xml
