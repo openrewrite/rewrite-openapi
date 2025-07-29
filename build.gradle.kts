@@ -18,18 +18,11 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.13.3")
 
-    testRuntimeOnly("io.swagger:swagger-annotations:1.5.16")
-    testRuntimeOnly("io.swagger:swagger-models:1.5.16")
-    testRuntimeOnly("io.swagger:swagger-core:1.5.16")
-    testRuntimeOnly("io.swagger:swagger-mule:1.5.16")
-    testRuntimeOnly("io.swagger.core.v3:swagger-annotations:2.2.34")
-    testRuntimeOnly("io.swagger.core.v3:swagger-models:2.2.34")
-    testRuntimeOnly("io.swagger.core.v3:swagger-core:2.2.34")
-
+    testRuntimeOnly("io.swagger:swagger-annotations:1.6.13")
+    testRuntimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
     testRuntimeOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
 
     testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
-
 }
 
 recipeDependencies {
