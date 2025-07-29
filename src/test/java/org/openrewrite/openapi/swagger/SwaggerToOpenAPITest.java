@@ -306,6 +306,51 @@ class SwaggerToOpenAPITest implements RewriteTest {
     }
 
     @Test
+    void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButIgnoreDependencyWithoutUpgradePath() {
+        rewriteRun(
+          pomXml(
+            //language=xml
+            """
+              <project>
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>com.example</groupId>
+                <artifactId>demo-child</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <properties>
+                  <version.swagger>1.5.16</version.swagger>
+                </properties>
+                <dependencies>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                    <version>${version.swagger}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-models</artifactId>
+                    <version>${version.swagger}</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-mule</artifactId>
+                    <version>1.5.16</version>
+                  </dependency>
+                </dependencies>
+              </project>
+              """,
+            spec -> spec.after(actual ->
+              assertThat(actual)
+                .containsPattern("<version.swagger>2.2.\\d+</version.swagger>")
+                .containsPattern("<groupId>io.swagger.core.v3</groupId>")
+                .doesNotContainPattern("<groupId>io.swagger</groupId>")
+                .doesNotContainPattern("<!--~~")
+                .actual()
+            )
+          )
+        );
+    }
+
+    @Test
     void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButFailsWithNoUpgradePath() {
         rewriteRun(
           pomXml(
