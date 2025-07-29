@@ -306,8 +306,8 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
-    @Test
     @Disabled
+    @Test
     void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButIgnoreDependencyWithoutUpgradePath() {
         rewriteRun(
           pomXml(
@@ -352,8 +352,8 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
-    @Test
     @Disabled
+    @Test
     void shouldUpdateSharedPropertyVersionNumberForSwaggerArtifactsButFailsWhenDependencyHasNoUpgradePath() {
         rewriteRun(
           pomXml(
