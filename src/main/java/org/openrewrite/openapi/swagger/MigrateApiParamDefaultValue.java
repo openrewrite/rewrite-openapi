@@ -98,7 +98,7 @@ public class MigrateApiParamDefaultValue extends Recipe {
                     }
 
                     private boolean isDefaultValue(Expression exp) {
-                        return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("defaultValue");
+                        return exp instanceof J.Assignment && "defaultValue".equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
                     }
                 }
         );

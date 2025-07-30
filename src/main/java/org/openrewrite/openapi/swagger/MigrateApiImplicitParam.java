@@ -106,11 +106,11 @@ public class MigrateApiImplicitParam extends Recipe {
               }
 
               private boolean isDataTypeClass(Expression exp) {
-                  return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("dataTypeClass");
+                  return exp instanceof J.Assignment && "dataTypeClass".equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
               }
 
               private boolean isDefaultValue(Expression exp) {
-                  return exp instanceof J.Assignment && ((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName().equals("defaultValue");
+                  return exp instanceof J.Assignment && "defaultValue".equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
               }
           }
         );
