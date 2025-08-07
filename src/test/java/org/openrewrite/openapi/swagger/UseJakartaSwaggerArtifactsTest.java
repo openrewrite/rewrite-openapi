@@ -72,6 +72,7 @@ class UseJakartaSwaggerArtifactsTest implements RewriteTest {
         );
     }
 
+    // Needs: https://github.com/openrewrite/rewrite/pull/5880
     @Test
     void dependencyManaged() {
         rewriteRun(
@@ -120,7 +121,7 @@ class UseJakartaSwaggerArtifactsTest implements RewriteTest {
                   <dependencies>
                       <dependency>
                           <groupId>io.swagger.core.v3</groupId>
-                          <artifactId>swagger-annotations</artifactId>
+                          <artifactId>swagger-annotations-jakarta</artifactId>
                       </dependency>
                   </dependencies>
               </project>
@@ -129,7 +130,7 @@ class UseJakartaSwaggerArtifactsTest implements RewriteTest {
         );
     }
 
-    @Disabled("Needs: https://github.com/openrewrite/rewrite/pull/5815")
+    // Needs: https://github.com/openrewrite/rewrite/pull/5815
     @Test
     void parentChild() {
         rewriteRun(
