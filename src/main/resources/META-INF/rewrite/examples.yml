@@ -15,7 +15,7 @@
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.MigrateApiModelToSchema
 examples:
-- description: ''
+- description: '`MigrateApiModelToSchemaTest#shouldChangeApiModelWithSchema`'
   sources:
   - before: |
       import io.swagger.annotations.ApiModel;
@@ -40,7 +40,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
 examples:
-- description: ''
+- description: '`MigrateApiResponsesToApiResponsesTest#convertApiResponseCodesToStrings`'
   sources:
   - before: |
       import io.swagger.annotations.ApiResponse;
@@ -65,7 +65,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.MigrateApiToTag
 examples:
-- description: ''
+- description: '`MigrateApiToTagTest#single`'
   sources:
   - before: |
       import io.swagger.annotations.Api;
@@ -82,7 +82,7 @@ examples:
 type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.SwaggerToOpenAPI
 examples:
-- description: ''
+- description: '`SwaggerToOpenAPITest#shouldChangeSwaggerArtifacts`'
   sources:
   - before: |
       import io.swagger.annotations.ApiModel;
