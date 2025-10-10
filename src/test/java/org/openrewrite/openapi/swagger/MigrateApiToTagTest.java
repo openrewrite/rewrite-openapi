@@ -53,7 +53,6 @@ class MigrateApiToTagTest implements RewriteTest {
         );
     }
 
-    @DocumentExample
     @Test
     void single_with_produces() {
         rewriteRun(
