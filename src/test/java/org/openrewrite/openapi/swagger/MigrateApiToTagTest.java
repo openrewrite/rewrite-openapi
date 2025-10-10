@@ -53,6 +53,27 @@ class MigrateApiToTagTest implements RewriteTest {
         );
     }
 
+    @Test
+    void single_with_produces() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+
+              @Api(value = "Bar", produces = "application/json")
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "Bar")
+              class Example {}
+              """
+          )
+        );
+    }
+
     // Hidden is supported in swagger-annotations-2.+
     @Test
     void singleHidden() {
