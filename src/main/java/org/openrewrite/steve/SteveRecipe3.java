@@ -341,26 +341,45 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
         }
     }
 
-    private Produced buildProduced(boolean isContextSensitive, String oldAccess, JavaType.Primitive coreType, Cursor definitionScope, J oldAccessExpression) {
+    private String buildNewFieldName(String oldAccess, String asType, Cursor definitionScope) {
         String appropriateBase = oldAccess.contains(".") ? oldAccess.replace(".", "__").toLowerCase() : oldAccess;
-        String newFieldName = VariableNameUtils.generateVariableName(
-                appropriateBase + "As" + coreType.name(),
+        return VariableNameUtils.generateVariableName(
+                appropriateBase + "As" + asType,
                 definitionScope,
                 VariableNameUtils.GenerationStrategy.INCREMENT_NUMBER
         );
-        JavaType newFieldType = JavaType.buildType(coreType.getKeyword());
+    }
+
+    private Produced buildProducedHelper(boolean isContextSensitive, String newAccess, String asType, String defaultType, JavaType fieldType, String newStatement, Cursor definitionScope, J oldAccessExpression) {
         JavaType enclosingType = definitionScope.firstEnclosingOrThrow(J.ClassDeclaration.class).getType();
         J.Identifier newFieldReference = new J.Identifier(
                 Tree.randomId(),
                 Space.EMPTY,
                 Markers.EMPTY,
                 Collections.emptyList(),
-                newFieldName,
-                newFieldType,
-                new JavaType.Variable(null, Flag.Private.getBitMask(), newFieldName, enclosingType, newFieldType, null)
+                newAccess,
+                fieldType,
+                new JavaType.Variable(null, Flag.Private.getBitMask(), newAccess, enclosingType, fieldType, null)
         );
-        String newFieldStatement = buildStatement(newFieldName, coreType);
-        return new Produced(newFieldReference, getDefaultValueType(coreType), newFieldStatement, isContextSensitive, oldAccessExpression);
+        return new Produced(newFieldReference, defaultType, newStatement, isContextSensitive, oldAccessExpression);
+    }
+
+    private Produced buildProduced(boolean isContextSensitive, JavaType.Primitive coreType, Cursor definitionScope, J oldAccessExpression) {
+        String newFieldName = buildNewFieldName(oldAccessExpression.toString(), coreType.name(), definitionScope);
+        return buildProducedHelper(
+                isContextSensitive,
+                newFieldName,
+                coreType.name(),
+                getDefaultValueType(coreType),
+                JavaType.buildType(coreType.getKeyword()),
+                buildStatement(newFieldName, coreType),
+                definitionScope,
+                oldAccessExpression
+        );
+    }
+
+    private Produced buildProduced(boolean isContextSensitive, JavaType.Parameterized parameterizedType, Cursor definitionScope, J oldAccessExpression) {
+        return null;
     }
 
     private boolean isWithinCurrentScope(JavaType currentScope, JavaType checkType) {
@@ -372,6 +391,10 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
             return isWithinCurrentScope(((JavaType.FullyQualified) currentScope).getOwningClass(), checkType);
         }
         return currentScope.equals(checkType);
+    }
+
+    private boolean matchesParameterizedType(JavaType.Parameterized toMatch, String goalType, List<String> goalParameterTypes) {
+        return TypeUtils.isAssignableTo(new JavaType.Parameterized(null, (JavaType.FullyQualified) JavaType.buildType(goalType), goalParameterTypes.stream().map(JavaType::buildType).collect(Collectors.toList())), toMatch);
     }
 
     private void accumulateNewField(JavaType annotatedMethodType, Expression oldAccess, Cursor definitionScope, Accumulator acc) {
@@ -393,13 +416,28 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
             return;
         }
         JavaType.Primitive coreType = getJavaTypePrimitive(annotatedMethodType);
-        if (coreType.equals(JavaType.Primitive.String)) {
+        if (JavaType.Primitive.String.equals(coreType)) {
             return;
+        }
+        Produced produced = null;
+        if (coreType == null) {
+            if (annotatedMethodType instanceof JavaType.Parameterized) {
+                boolean isStringList = matchesParameterizedType((JavaType.Parameterized) annotatedMethodType, "java.util.List", Arrays.asList("java.lang.String"));
+                // TODO: Array
+                boolean isStringSet = matchesParameterizedType((JavaType.Parameterized) annotatedMethodType, "java.util.Set", Arrays.asList("java.lang.String"));
+                if (isStringList) {
+//                    produced =
+                }
+            } else {
+                return;
+            }
+        } else {
+            produced = buildProduced(isContextSensitive, coreType, definitionScope, oldAccess);
         }
         acc.accumulatedFields
                 .computeIfAbsent(definitionScope.firstEnclosingOrThrow(J.CompilationUnit.class).getSourcePath(), s -> new HashMap<>())
                 .computeIfAbsent(fieldType, k -> new HashMap<>())
-                .putIfAbsent(coreType, buildProduced(isContextSensitive, oldAccess.toString(), coreType, definitionScope, oldAccess));
+                .putIfAbsent(coreType, produced);
     }
 
     @Value
