@@ -15,13 +15,21 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
 public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
-    private final String propertyAnnotationName = "x.y.z.Property";
-    private final String defaultValueAnnotationName = "x.y.z.DefaultValue";
+    private static final String propertyAnnotationName = "x.y.z.Property";
+    private static final String defaultValueAnnotationName = "x.y.z.DefaultValue";
+    private static final JavaType listType = JavaType.buildType("java.util.List");
+    private static final JavaType setType = JavaType.buildType("java.util.Set");
+    private static final JavaType stringType = JavaType.buildType("java.lang.String");
+    private static final JavaType arrayOfStringType = new JavaType.Array(null, stringType, null);
+    private static final JavaType listOfStringType = new JavaType.Parameterized(null, (JavaType.FullyQualified) listType, singletonList(stringType));
+    private static final JavaType setOfStringType = new JavaType.Parameterized(null, (JavaType.FullyQualified) setType, singletonList(stringType));
     @Language("java")
     private final String dependsOnInterface =
             "package x.y.z;\n" +
@@ -70,7 +78,7 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
 
     @Override
     public Accumulator getInitialValue(ExecutionContext ctx) {
-        return new Accumulator(new HashMap<>());
+        return new Accumulator(new HashMap<>(), new HashMap<>());
     }
 
     @Override
@@ -107,24 +115,20 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
                     return visited;
                 }
                 Path sourcePath = ((SourceFile) requireNonNull(visited)).getSourcePath();
-                final Map<JavaType.Variable, Map<JavaType.Primitive, Produced>> relevantFields;
-                if (!acc.getAccumulatedFields().isEmpty()) {
-                    if (!acc.getAccumulatedFields().containsKey(sourcePath)) {
-                        return visited;
-                    }
-                    relevantFields = acc.getAccumulatedFields().get(sourcePath);
-                } else {
-                    relevantFields = new HashMap<>();
+                final Map<JavaType.Variable, Map<JavaType, Produced>> relevantRemappedFields = acc.getAccumulatedFields().getOrDefault(sourcePath, new HashMap<>());
+                final Map<String, Produced> relevantNetNewFields = acc.getAccumulatedLiteralTransformedFields().getOrDefault(sourcePath, new HashMap<>());
+                if (relevantRemappedFields.isEmpty() && relevantNetNewFields.isEmpty()) {
+                    return visited;
                 }
                 visited = new JavaIsoVisitor<ExecutionContext>() {
                     @Override
                     public J.ClassDeclaration visitClassDeclaration(J.ClassDeclaration classDecl, ExecutionContext ctx) {
                         J.ClassDeclaration cd = super.visitClassDeclaration(classDecl, ctx);
-                        if (!relevantFields.isEmpty()) {
-                            List<Produced> producedItems = relevantFields.values().stream()
-                                    .flatMap(x -> x.values().stream())
-                                    .sorted(comparing(p -> p.getNewFieldReference().getSimpleName()))
-                                    .collect(Collectors.toList());
+                        if (!relevantRemappedFields.isEmpty() || !relevantNetNewFields.isEmpty()) {
+                            List<Produced> producedItems = Stream.concat(
+                                    relevantRemappedFields.values().stream().flatMap(x -> x.values().stream()),
+                                    relevantNetNewFields.values().stream()
+                            ).sorted(comparing(p -> p.getNewFieldReference().getSimpleName())).collect(Collectors.toList());
                             for (Produced produced : producedItems) {
                                 if (TypeUtils.isOfType(cd.getType(), requireNonNull(produced.getNewFieldReference().getFieldType()).getOwner())) {
                                     List<Statement> statements = cd.getBody().getStatements().stream()
@@ -171,16 +175,31 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
                             String defaultValueType = "String";
                             boolean isContextSensitive = true;
                             if (updatedValue instanceof J.Literal) {
-                                updatedValue = getProperlyQuotedLiteral(primitiveType, (J.Literal) updatedValue);
-                                defaultValueType = getDefaultValueType(primitiveType);
-                                isContextSensitive = false;
-                            } else if (!primitiveType.equals(JavaType.Primitive.String)) {
+                                J.Literal castValue = (J.Literal) updatedValue;
+                                Produced produced = relevantNetNewFields.get(castValue.getValueSource());
+                                if (produced != null) {
+                                    updatedValue = produced.getNewFieldReference();
+                                    defaultValueType = produced.getDefaultValueType();
+                                } else {
+                                    // TODO: cleanup here since using primitive type
+                                    updatedValue = getProperlyQuotedLiteral(primitiveType, castValue);
+                                    defaultValueType = getDefaultValueType(primitiveType);
+                                    isContextSensitive = false;
+                                }
+                            } else if (!JavaType.Primitive.String.equals(primitiveType)) {
                                 if (updatedValue instanceof J.Identifier) {
-                                    Produced produced = relevantFields.get(((J.Identifier) updatedValue).getFieldType()).get(primitiveType);
+                                    J.Identifier castValue = (J.Identifier) updatedValue;
+                                    Produced produced;
+                                    // TODO: sort out getting the right type for lookup, since we used static values
+                                    if (primitiveType != null) {
+                                        produced = relevantRemappedFields.get(castValue.getFieldType()).get(primitiveType);
+                                    } else {
+                                        produced = relevantRemappedFields.get(castValue.getFieldType()).get(null);
+                                    }
                                     updatedValue = produced.getNewFieldReference();
                                     defaultValueType = produced.getDefaultValueType();
                                 } else if (updatedValue instanceof J.FieldAccess) {
-                                    Produced produced = relevantFields.get(((J.FieldAccess) updatedValue).getName().getFieldType()).get(primitiveType);
+                                    Produced produced = relevantRemappedFields.get(((J.FieldAccess) updatedValue).getName().getFieldType()).get(primitiveType);
                                     updatedValue = produced.getNewFieldReference();
                                     defaultValueType = produced.getDefaultValueType();
                                     isContextSensitive = false;
@@ -214,72 +233,83 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
         return fromKeyword != null ? fromKeyword : fromClassName;
     }
 
-    private String getDefaultValueType(JavaType.Primitive coreType) {
-        switch (coreType) {
-            case String: {
-                return "String";
+    private String getDefaultValueType(JavaType type) {
+        if (type instanceof JavaType.Primitive) {
+            JavaType.Primitive coreType = (JavaType.Primitive) type;
+            switch (coreType) {
+                case String: {
+                    return "String";
+                }
+                case Boolean: {
+                    return "Boolean";
+                }
+                case Byte: {
+                    return "DefaultByte";
+                }
+                case Char: {
+                    return "DefaultChar";
+                }
+                case Short: {
+                    return "DefaultShort";
+                }
+                case Int: {
+                    return "Int";
+                }
+                case Long: {
+                    return "Long";
+                }
+                case Float: {
+                    return "Float";
+                }
+                case Double: {
+                    return "Double";
+                }
             }
-            case Boolean: {
-                return "Boolean";
-            }
-            case Byte: {
-                return "DefaultByte";
-            }
-            case Char: {
-                return "DefaultChar";
-            }
-            case Short: {
-                return "DefaultShort";
-            }
-            case Int: {
-                return "Int";
-            }
-            case Long: {
-                return "Long";
-            }
-            case Float: {
-                return "Float";
-            }
-            case Double: {
-                return "Double";
-            }
-            default: {
-                // TODO: Lists, Arrays, Enum, Set?
-                return "";
-            }
-        }
-    }
-
-    private String buildStatement(String newFieldName, JavaType.Primitive coreType) {
-        switch (coreType) {
-            case Boolean: {
-                return "private boolean " + newFieldName + " = Boolean.parseBoolean(#{any(String)});";
-            }
-            case Short: {
-                return "private short " + newFieldName + " = Short.parseShort(#{any(String)});";
-            }
-            case Double: {
-                return "private double " + newFieldName + " = Double.parseDouble(#{any(String)});";
-            }
-            case Float: {
-                return "private float " + newFieldName + " = Float.parseFloat(#{any(String)});";
-            }
-            case Int: {
-                return "private int " + newFieldName + " = Integer.parseInt(#{any(String)});";
-            }
-            case Byte: {
-                return "private byte " + newFieldName + " = Byte.parseByte(#{any(String)});";
-            }
-            case Long: {
-                return "private long " + newFieldName + " = Long.parseLong(#{any(String)});";
-            }
-            case Char: {
-                return "private char " + newFieldName + " = #{any(String)}.charAt(0);";
-            }
-            // TODO: Maybe not string
-            // TODO: String? List?
+        } else if (TypeUtils.isAssignableTo(arrayOfStringType, type)) {
+            return "Array";
+        } else if (TypeUtils.isAssignableTo(listOfStringType, type)) {
+            return "List";
+        } else if (TypeUtils.isAssignableTo(setOfStringType, type)) {
+            return "Set";
         }
         return null;
+    }
+
+    private String buildStatement(String newFieldName, String defaultType) {
+        switch (defaultType) {
+            case "Boolean": {
+                return "private boolean " + newFieldName + " = Boolean.parseBoolean(#{any(String)});";
+            }
+            case "DefaultByte": {
+                return "private byte " + newFieldName + " = Byte.parseByte(#{any(String)});";
+            }
+            case "DefaultChar": {
+                return "private char " + newFieldName + " = #{any(String)}.charAt(0);";
+            }
+            case "DefaultShort": {
+                return "private short " + newFieldName + " = Short.parseShort(#{any(String)});";
+            }
+            case "Int": {
+                return "private int " + newFieldName + " = Integer.parseInt(#{any(String)});";
+            }
+            case "Long": {
+                return "private long " + newFieldName + " = Long.parseLong(#{any(String)});";
+            }
+            case "Float": {
+                return "private float " + newFieldName + " = Float.parseFloat(#{any(String)});";
+            }
+            case "Double": {
+                return "private double " + newFieldName + " = Double.parseDouble(#{any(String)});";
+            }
+            case "List":
+            case "Array":
+            case "Set": {
+                return "private String[] " + newFieldName + " = #{any(String)}.split(\",\");";
+            }
+            default: {
+                return null;
+            }
+        }
     }
 
     private J.Literal getProperlyQuotedLiteral(JavaType.Primitive newType, J.Literal originalLiteral) {
@@ -350,7 +380,7 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
         );
     }
 
-    private Produced buildProducedHelper(boolean isContextSensitive, String newAccess, String asType, String defaultType, JavaType fieldType, String newStatement, Cursor definitionScope, J oldAccessExpression) {
+    private Produced buildProducedHelper(boolean isContextSensitive, String newAccess, String defaultType, JavaType fieldType, String newStatement, Cursor definitionScope, J oldAccessExpression) {
         JavaType enclosingType = definitionScope.firstEnclosingOrThrow(J.ClassDeclaration.class).getType();
         J.Identifier newFieldReference = new J.Identifier(
                 Tree.randomId(),
@@ -364,22 +394,32 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
         return new Produced(newFieldReference, defaultType, newStatement, isContextSensitive, oldAccessExpression);
     }
 
-    private Produced buildProduced(boolean isContextSensitive, JavaType.Primitive coreType, Cursor definitionScope, J oldAccessExpression) {
-        String newFieldName = buildNewFieldName(oldAccessExpression.toString(), coreType.name(), definitionScope);
+    private Produced buildProduced(boolean isContextSensitive, JavaType type, Cursor definitionScope, J oldAccessExpression, int count) {
+        String defaultType = getDefaultValueType(type);
+        if (defaultType == null) {
+            return null;
+        }
+        String asType = "Array";
+        JavaType newFieldType = arrayOfStringType;
+        if (type instanceof JavaType.Primitive) {
+            JavaType.Primitive castType = (JavaType.Primitive) type;
+            asType = castType.name();
+            newFieldType = JavaType.buildType(castType.getKeyword());
+        }
+        String newNameBase = oldAccessExpression.toString();
+        if (oldAccessExpression instanceof J.Literal) {
+            newNameBase = "literalArg" + count;
+        }
+        String newFieldName = buildNewFieldName(newNameBase, asType, definitionScope);
         return buildProducedHelper(
                 isContextSensitive,
                 newFieldName,
-                coreType.name(),
-                getDefaultValueType(coreType),
-                JavaType.buildType(coreType.getKeyword()),
-                buildStatement(newFieldName, coreType),
+                defaultType,
+                newFieldType,
+                buildStatement(newFieldName, defaultType),
                 definitionScope,
                 oldAccessExpression
         );
-    }
-
-    private Produced buildProduced(boolean isContextSensitive, JavaType.Parameterized parameterizedType, Cursor definitionScope, J oldAccessExpression) {
-        return null;
     }
 
     private boolean isWithinCurrentScope(JavaType currentScope, JavaType checkType) {
@@ -393,51 +433,61 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
         return currentScope.equals(checkType);
     }
 
-    private boolean matchesParameterizedType(JavaType.Parameterized toMatch, String goalType, List<String> goalParameterTypes) {
-        return TypeUtils.isAssignableTo(new JavaType.Parameterized(null, (JavaType.FullyQualified) JavaType.buildType(goalType), goalParameterTypes.stream().map(JavaType::buildType).collect(Collectors.toList())), toMatch);
+    private void accumulateRemapped(Path path, JavaType.Variable oldVarType, JavaType newFieldType, Produced produced, Accumulator acc) {
+        acc.getAccumulatedFields()
+            .computeIfAbsent(path, s -> new HashMap<>())
+            .computeIfAbsent(oldVarType, k -> new HashMap<>())
+            .putIfAbsent(newFieldType, produced);
+    }
+
+    private void accumulateNetNew(Path path, String oldValue, Produced produced, Accumulator acc) {
+        acc.getAccumulatedLiteralTransformedFields()
+            .computeIfAbsent(path, s -> new HashMap<>())
+            .putIfAbsent(oldValue, produced);
     }
 
     private void accumulateNewField(JavaType annotatedMethodType, Expression oldAccess, Cursor definitionScope, Accumulator acc) {
-        JavaType.Variable fieldType;
-        boolean isContextSensitive = false;
+        String defaultValueType =  getDefaultValueType(annotatedMethodType);
+        if (defaultValueType == null) {
+            return;
+        }
+        JavaType matchingType = getJavaTypePrimitive(annotatedMethodType);
+        boolean allowLiteralTransformedField = false;
+        if ("Array".equals(defaultValueType)) {
+            allowLiteralTransformedField = true;
+            matchingType = arrayOfStringType;
+        } else if ("List".equals(defaultValueType)) {
+            allowLiteralTransformedField = true;
+            matchingType = listOfStringType;
+        } else if ("Set".equals(defaultValueType)) {
+            allowLiteralTransformedField = true;
+            matchingType = setOfStringType;
+        }
+        // if String -> String, no new field
+        if (matchingType == null || JavaType.Primitive.String.equals(matchingType)) {
+            return;
+        }
+
+        Path filePath = definitionScope.firstEnclosingOrThrow(J.CompilationUnit.class).getSourcePath();
+        int count = acc.getAccumulatedLiteralTransformedFields().getOrDefault(filePath, new HashMap<>()).size();
         if (oldAccess instanceof J.Identifier) {
             J.Identifier castAccess =  (J.Identifier) oldAccess;
-            fieldType = requireNonNull(castAccess.getFieldType());
-            isContextSensitive = true;
+            JavaType.Variable oldVarType = requireNonNull(castAccess.getFieldType());
+            Produced produced = buildProduced(true, matchingType, definitionScope, oldAccess, count);
+            accumulateRemapped(filePath, oldVarType, matchingType, produced, acc);
         } else if (oldAccess instanceof J.FieldAccess) {
             J.FieldAccess castAccess = (J.FieldAccess) oldAccess;
-            fieldType = requireNonNull(castAccess.getName().getFieldType());
-            JavaType accessScope = fieldType.getOwner();
+            JavaType.Variable oldVarType = requireNonNull(castAccess.getName().getFieldType());
+            JavaType accessScope = oldVarType.getOwner();
             JavaType currentScope = definitionScope.firstEnclosingOrThrow(J.ClassDeclaration.class).getType();
-            if (isWithinCurrentScope(currentScope, accessScope)) {
-                isContextSensitive = true;
-            }
-        } else {
-            return;
+            Produced produced = buildProduced(isWithinCurrentScope(currentScope, accessScope), matchingType, definitionScope, oldAccess, count);
+            accumulateRemapped(filePath, oldVarType, matchingType, produced, acc);
+        } else if (oldAccess instanceof J.Literal && allowLiteralTransformedField) {
+            J.Literal castAccess = (J.Literal) oldAccess;
+            // Meaning we came across Array, List or Set
+            Produced produced = buildProduced(false, matchingType, definitionScope, oldAccess, count);
+            accumulateNetNew(filePath, castAccess.getValueSource(), produced, acc);
         }
-        JavaType.Primitive coreType = getJavaTypePrimitive(annotatedMethodType);
-        if (JavaType.Primitive.String.equals(coreType)) {
-            return;
-        }
-        Produced produced = null;
-        if (coreType == null) {
-            if (annotatedMethodType instanceof JavaType.Parameterized) {
-                boolean isStringList = matchesParameterizedType((JavaType.Parameterized) annotatedMethodType, "java.util.List", Arrays.asList("java.lang.String"));
-                // TODO: Array
-                boolean isStringSet = matchesParameterizedType((JavaType.Parameterized) annotatedMethodType, "java.util.Set", Arrays.asList("java.lang.String"));
-                if (isStringList) {
-//                    produced =
-                }
-            } else {
-                return;
-            }
-        } else {
-            produced = buildProduced(isContextSensitive, coreType, definitionScope, oldAccess);
-        }
-        acc.accumulatedFields
-                .computeIfAbsent(definitionScope.firstEnclosingOrThrow(J.CompilationUnit.class).getSourcePath(), s -> new HashMap<>())
-                .computeIfAbsent(fieldType, k -> new HashMap<>())
-                .putIfAbsent(coreType, produced);
     }
 
     @Value
@@ -451,6 +501,7 @@ public class SteveRecipe3 extends ScanningRecipe<SteveRecipe3.Accumulator> {
 
     @Value
     public static class Accumulator {
-        Map<Path, Map<JavaType.Variable, Map<JavaType.Primitive, Produced>>> accumulatedFields;
+        Map<Path, Map<JavaType.Variable, Map<JavaType, Produced>>> accumulatedFields;
+        Map<Path, Map<String, Produced>> accumulatedLiteralTransformedFields;
     }
 }

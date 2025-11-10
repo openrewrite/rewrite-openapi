@@ -1488,6 +1488,7 @@ public class SteveRecipeTest implements RewriteTest {
           java(
             """
               import java.util.Arrays;
+              import java.util.ArrayList;
               import java.util.List;
               import x.y.z.Constants;
               import x.y.z.Property;
@@ -1496,9 +1497,14 @@ public class SteveRecipeTest implements RewriteTest {
                   private String someField = "some_field";
                   private String someMultipleField = someField + ",some_other_field";
 
+                  @Property(propertyName = "x", defaultValue = "x")
+                  public String[] x() {
+                      return new String[] { "ax" };
+                  }
+
                   @Property(propertyName = "a", defaultValue = "a")
-                  public List<String> a() {
-                      return Arrays.asList("a1");
+                  public ArrayList<String> a() {
+                      return new ArrayList(Arrays.asList("a1"));
                   }
 
                   @Property(propertyName = "b", defaultValue = "a,b")
