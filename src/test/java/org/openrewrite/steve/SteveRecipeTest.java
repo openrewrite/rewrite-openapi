@@ -1482,14 +1482,12 @@ public class SteveRecipeTest implements RewriteTest {
     }
 
     @Test
-    void convertsPropertyForStringList() {
+    void convertsPropertyForStringListArrayOrSet() {
         rewriteRun(
           //language=java
           java(
             """
-              import java.util.Arrays;
-              import java.util.ArrayList;
-              import java.util.List;
+              import java.util.*;
               import x.y.z.Constants;
               import x.y.z.Property;
 
@@ -1497,90 +1495,91 @@ public class SteveRecipeTest implements RewriteTest {
                   private String someField = "some_field";
                   private String someMultipleField = someField + ",some_other_field";
 
-                  @Property(propertyName = "x", defaultValue = "x")
-                  public String[] x() {
-                      return new String[] { "ax" };
+                  @Property(propertyName = "aSet", defaultValue = "a,b")
+                  public Set<String> aSet() {
+                      return new HashSet<>() {{
+                          add("aSet");
+                      }};
                   }
 
-                  @Property(propertyName = "a", defaultValue = "a")
-                  public ArrayList<String> a() {
-                      return new ArrayList(Arrays.asList("a1"));
+                  @Property(propertyName = "aArrList", defaultValue = "a,b")
+                  public ArrayList<String> aArrList() {
+                      return new ArrayList<>(Collections.singletonList("aArrList"));
                   }
 
-                  @Property(propertyName = "b", defaultValue = "a,b")
+                  @Property(propertyName = "aArr", defaultValue = "a,b")
+                  public String[] aArr() {
+                      return new String[] { "aArr" };
+                  }
+
+                  @Property(propertyName = "aList", defaultValue = "a,b")
+                  public List<String> aList() {
+                      return Collections.singletonList("a1");
+                  }
+
+                  @Property(propertyName = "b", defaultValue = "b")
                   public List<String> b() {
-                      return Arrays.asList("a2");
+                      return Collections.singletonList("a2");
                   }
 
                   @Property(propertyName = "c", defaultValue = someField)
                   public List<String> c() {
-                      return Arrays.asList("a3");
+                      return Collections.singletonList("a3");
                   }
 
                   @Property(propertyName = "d", defaultValue = someMultipleField)
                   public List<String> d() {
-                      return Arrays.asList("a4");
+                      return Collections.singletonList("a4");
                   }
 
                   @Property(propertyName = "e", defaultValue = Constants.SOME_STRING)
                   public List<String> e() {
-                      return Arrays.asList("a5");
+                      return Collections.singletonList("a5");
                   }
 
-                  @Property(propertyName = "f", defaultValue = Constants.SOME_MULTIPLE_STRING)
+                  @Property(propertyName = "f", defaultValue = B.anotherField)
                   public List<String> f() {
-                      return Arrays.asList("a6");
-                  }
-
-                  @Property(propertyName = "g", defaultValue = B.anotherField)
-                  public List<String> g() {
-                      return Arrays.asList("a7");
-                  }
-
-                  @Property(propertyName = "h", defaultValue = B.anotherMultipleField)
-                  public List<String> h() {
-                      return Arrays.asList("a8");
+                      return Collections.singletonList("a6");
                   }
 
                   class B {
                       public static final String anotherField = "another_field";
                       public static final String anotherMultipleField = anotherField + ",another_other_field";
 
-                      @Property(propertyName = "i", defaultValue = someField)
+                      @Property(propertyName = "g", defaultValue = someField)
+                      public List<String> g() {
+                          return Collections.singletonList("a7");
+                      }
+
+                      @Property(propertyName = "h", defaultValue = someMultipleField)
+                      public List<String> h() {
+                          return Collections.singletonList("a8");
+                      }
+
+                      @Property(propertyName = "i", defaultValue = anotherField)
                       public List<String> i() {
-                          return Arrays.asList("a9");
+                          return Collections.singletonList("a9");
                       }
 
-                      @Property(propertyName = "j", defaultValue = someMultipleField)
+                      @Property(propertyName = "j", defaultValue = anotherMultipleField)
                       public List<String> j() {
-                          return Arrays.asList("a10");
+                          return Collections.singletonList("a10");
                       }
 
-                      @Property(propertyName = "k", defaultValue = anotherField)
+                      @Property(propertyName = "k", defaultValue = Constants.SOME_STRING)
                       public List<String> k() {
-                          return Arrays.asList("a11");
+                          return Collections.singletonList("a11");
                       }
 
-                      @Property(propertyName = "l", defaultValue = anotherMultipleField)
+                      @Property(propertyName = "l", defaultValue = Constants.SOME_MULTIPLE_STRING)
                       public List<String> l() {
-                          return Arrays.asList("a12");
-                      }
-
-                      @Property(propertyName = "m", defaultValue = Constants.SOME_STRING)
-                      public List<String> m() {
-                          return Arrays.asList("a13");
-                      }
-
-                      @Property(propertyName = "n", defaultValue = Constants.SOME_MULTIPLE_STRING)
-                      public List<String> n() {
-                          return Arrays.asList("a14");
+                          return Collections.singletonList("a12");
                       }
                   }
               }
               """,
             """
-              import java.util.Arrays;
-              import java.util.List;
+              import java.util.*;
               import x.y.z.Constants;
               import x.y.z.DefaultValue;
               import x.y.z.Property;
@@ -1588,96 +1587,107 @@ public class SteveRecipeTest implements RewriteTest {
               class A {
                   private String someField = "some_field";
                   private String someMultipleField = someField + ",some_other_field";
-                  private String[] b__anothermultiplefieldAsArray = B.anotherMultipleField.split(",");
-                  private String[] constants__some_multiple_stringAsArray = Constants.SOME_MULTIPLE_STRING.split(",");
+                  private String[] b__anotherfieldAsArray = B.anotherField.split(",");
+                  private String[] constants__some_stringAsArray = Constants.SOME_STRING.split(",");
+                  private String[] someFieldAsArray = someField.split(",");
                   private String[] someMultipleFieldAsArray = someMultipleField.split(",");
 
-                  @DefaultValue.List({ "a" })
-                  @Property(propertyName = "a")
-                  public List<String> a() {
-                      return Arrays.asList("a1");
+                  @DefaultValue.Set({"a", "b"})
+                  @Property(propertyName = "aSet")
+                  public Set<String> aSet() {
+                      return new HashSet<>() {{
+                          add("aSet");
+                      }};
                   }
 
-                  @DefaultValue.List({ "a", "b" })
+                  @DefaultValue.List({"a", "b"})
+                  @Property(propertyName = "aArrList")
+                  public ArrayList<String> aArrList() {
+                      return new ArrayList<>(Collections.singletonList("aArrList"));
+                  }
+
+                  @DefaultValue.Array({"a", "b"})
+                  @Property(propertyName = "aArr")
+                  public String[] aArr() {
+                      return new String[] { "aArr" };
+                  }
+
+                  @DefaultValue.List({"a", "b"})
+                  @Property(propertyName = "aList")
+                  public List<String> aList() {
+                      return Collections.singletonList("a1");
+                  }
+
+                  @DefaultValue.List({"b"})
                   @Property(propertyName = "b")
                   public List<String> b() {
-                      return Arrays.asList("a2");
+                      return Collections.singletonList("a2");
                   }
 
-                  @DefaultValue.List({ someField })
+                  @DefaultValue.List(someFieldAsArray)
                   @Property(propertyName = "c")
                   public List<String> c() {
-                      return Arrays.asList("a3");
+                      return Collections.singletonList("a3");
                   }
 
                   @DefaultValue.List(someMultipleFieldAsArray)
                   @Property(propertyName = "d")
                   public List<String> d() {
-                      return Arrays.asList("a4");
+                      return Collections.singletonList("a4");
                   }
 
-                  @DefaultValue.List({ Constants.SOME_STRING })
+                  @DefaultValue.List(constants__some_stringAsArray)
                   @Property(propertyName = "e")
                   public List<String> e() {
-                      return Arrays.asList("a5");
+                      return Collections.singletonList("a5");
                   }
 
-                  @DefaultValue.List(constants__some_multiple_stringAsArray)
+                  @DefaultValue.List(b__anotherfieldAsArray)
                   @Property(propertyName = "f")
-                  public List<String> e() {
-                      return Arrays.asList("a6");
-                  }
-
-                  @DefaultValue.List({ B.anotherField })
-                  @Property(propertyName = "g")
-                  public List<String> g() {
-                      return Arrays.asList("a7");
-                  }
-
-                  @DefaultValue.List(b__anothermultiplefieldAsArray)
-                  @Property(propertyName = "h")
-                  public List<String> h() {
-                      return Arrays.asList("a8");
+                  public List<String> f() {
+                      return Collections.singletonList("a6");
                   }
 
                   class B {
                       public static final String anotherField = "another_field";
                       public static final String anotherMultipleField = anotherField + ",another_other_field";
+                      private String[] anotherMultipleFieldAsArray = anotherMultipleField.split(",");
+                      private String[] constants__some_multiple_stringAsArray = Constants.SOME_MULTIPLE_STRING.split(",");
 
-                      @DefaultValue.List({ someField })
-                      @Property(propertyName = "i")
-                      public List<String> i() {
-                          return Arrays.asList("a9");
+                      @DefaultValue.List(someFieldAsArray)
+                      @Property(propertyName = "g")
+                      public List<String> g() {
+                          return Collections.singletonList("a7");
                       }
 
                       @DefaultValue.List(someMultipleFieldAsArray)
+                      @Property(propertyName = "h")
+                      public List<String> h() {
+                          return Collections.singletonList("a8");
+                      }
+
+                      @DefaultValue.List(b__anotherfieldAsArray)
+                      @Property(propertyName = "i")
+                      public List<String> i() {
+                          return Collections.singletonList("a9");
+                      }
+
+                      @DefaultValue.List(anotherMultipleFieldAsArray)
                       @Property(propertyName = "j")
                       public List<String> j() {
-                          return Arrays.asList("a10");
+                          return Collections.singletonList("a10");
                       }
 
-                      @DefaultValue.List({ anotherField })
+                      @DefaultValue.List(constants__some_stringAsArray)
                       @Property(propertyName = "k")
                       public List<String> k() {
-                          return Arrays.asList("a11");
-                      }
-
-                      @DefaultValue.List(b_anothermultiplefieldAsArray)
-                      @Property(propertyName = "l")
-                      public List<String> l() {
-                          return Arrays.asList("a12");
-                      }
-
-                      @DefaultValue.List({ Constants.SOME_STRING })
-                      @Property(propertyName = "m")
-                      public List<String> m() {
-                          return Arrays.asList("a13");
+                          return Collections.singletonList("a11");
                       }
 
                       @DefaultValue.List(constants__some_multiple_stringAsArray)
-                      @Property(propertyName = "n")
-                      public List<String> n() {
-                          return Arrays.asList("a14");
+                      @Property(propertyName = "l")
+                      public List<String> l() {
+                          return Collections.singletonList("a12");
                       }
                   }
               }
