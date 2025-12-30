@@ -47,7 +47,7 @@ public class ConvertApiResponseToContent extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Convert API response to content annotation";
+        return "Add `content = @Content(mediaType = ...)` and `schema` to `@ApiResponse`.";
     }
 
     @Override
