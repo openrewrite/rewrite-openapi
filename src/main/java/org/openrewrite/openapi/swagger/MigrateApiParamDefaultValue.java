@@ -65,6 +65,8 @@ public class MigrateApiParamDefaultValue extends Recipe {
                             if (isDefaultValue(exp)) {
                                 Expression expression = ((J.Assignment) exp).getAssignment();
                                 addSchema(schemaTpl, "defaultValue");
+                                normalizeSchema(schemaTpl);
+                                tpl.append(schemaTpl).append(", ");
                                 args.add(expression);
                             } else {
                                 tpl.append("#{any()}, ");
@@ -73,13 +75,6 @@ public class MigrateApiParamDefaultValue extends Recipe {
                         }
                         if (tpl.toString().endsWith(", ")) {
                             tpl.delete(tpl.length() - 2, tpl.length());
-                        }
-                        if (schemaTpl.length() > 0) {
-                            if (schemaTpl.toString().endsWith(", ")) {
-                                schemaTpl.delete(schemaTpl.length() - 2, schemaTpl.length());
-                            }
-                            schemaTpl.append(")");
-                            tpl.append(", ").append(schemaTpl);
                         }
                         anno = JavaTemplate.builder(tpl.toString())
                                 .imports(FQN_SCHEMA)
@@ -91,10 +86,19 @@ public class MigrateApiParamDefaultValue extends Recipe {
                     }
 
                     private void addSchema(StringBuilder tpl, String key) {
-                        if (tpl.length() == 0) {
+                    	if (tpl.length() == 0) {
                             tpl.append("schema = @Schema(");
                         }
                         tpl.append(key).append(" = #{any()}, ");
+                    }
+
+                    private void normalizeSchema(StringBuilder schemaTpl) {
+                    	if (schemaTpl.length() > 0) {
+                            if (schemaTpl.toString().endsWith(", ")) {
+                                schemaTpl.delete(schemaTpl.length() - 2, schemaTpl.length());
+                            }
+                            schemaTpl.append(")");
+                        }
                     }
 
                     private boolean isDefaultValue(Expression exp) {

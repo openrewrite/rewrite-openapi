@@ -183,6 +183,37 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
+    /**
+     *
+     * Same test as {@link #migrateApiParam()} making sure the order of the annotation properties doesn't break the logic
+     *
+     */
+    @Test
+    void migrateApiParamDiffOrder() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                @ApiParam(name = "foo", value = "Foo Object", defaultValue = "bar", required = false)
+                private Integer foo;
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo Object", schema = @Schema(defaultValue = "bar"), required = false)
+                private Integer foo;
+              }
+              """
+          )
+        );
+    }
+
     @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
         rewriteRun(
