@@ -206,7 +206,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
               import io.swagger.v3.oas.annotations.media.Schema;
 
               class Example {
-                @Parameter(name = "foo", description = "Foo Object", schema = @Schema(defaultValue = "bar"), required = false)
+                @Parameter(name = "foo", description = "Foo Object", required = false, schema = @Schema(defaultValue = "bar"))
                 private Integer foo;
               }
               """
@@ -214,6 +214,58 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
+    @Test
+    void migrateApiParamAllowableValues() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                @ApiParam(name = "foo", value = "Foo Object", allowableValues = "foo, bar", required = false)
+                private Integer foo;
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo Object", required = false, schema = @Schema(allowableValues = "foo, bar"))
+                private Integer foo;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateApiParamMultiSchema() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                @ApiParam(name = "foo", value = "Foo Object", allowableValues = "foo, bar", required = false, defaultValue = "bar")
+                private Integer foo;
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo Object", required = false, schema = @Schema(allowableValues = "foo, bar", defaultValue = "bar"))
+                private Integer foo;
+              }
+              """
+          )
+        );
+    }
+    
     @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
         rewriteRun(

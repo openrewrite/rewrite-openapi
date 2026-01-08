@@ -215,6 +215,7 @@ recipeList:
       annotationType: io.swagger.v3.oas.annotations.Parameter
       attributeName: allowMultiple
   - org.openrewrite.openapi.swagger.MigrateApiParamDefaultValue
+  - org.openrewrite.openapi.swagger.MigrateApiParamAllowableValues
 
 ---
 type: specs.openrewrite.org/v1beta/recipe

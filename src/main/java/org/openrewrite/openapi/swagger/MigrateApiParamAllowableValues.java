@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2026 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,26 @@ import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.search.UsesMethod;
 
-public class MigrateApiParamDefaultValue extends Recipe {
-	private static final String VBLE_NAME = "defaultValue";
+public class MigrateApiParamAllowableValues extends Recipe {
+
+    private static final String VBLE_NAME = "allowableValues";
 
     @Override
     public String getDisplayName() {
-        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema)`";
+        return "Migrate `@ApiParam(allowableValues)` to `@Parameter(schema)`";
     }
 
     @Override
     public String getDescription() {
-        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema = @Schema(defaultValue))`.";
+        return "Migrate `@ApiParam(allowableValues)` to `@Parameter(schema = @Schema(allowableValues))`.";
     }
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-                new UsesMethod<>("io.swagger.annotations.ApiParam defaultValue()", false),
+                new UsesMethod<>("io.swagger.annotations.ApiParam allowableValues()", false),
                 new MigrateApiParamSchemaValue(VBLE_NAME));
     }
+ 
 }
