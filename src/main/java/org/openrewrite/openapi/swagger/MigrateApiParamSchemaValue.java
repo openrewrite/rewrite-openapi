@@ -98,7 +98,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
         if (expr instanceof J.Assignment) {
             Expression vble = ((J.Assignment) expr).getVariable();
             if (vble instanceof J.Identifier) {
-                return ((J.Identifier) vble).getSimpleName().equals("schema");
+                return "schema".equals(((J.Identifier) vble).getSimpleName());
             }
         }
         return false;

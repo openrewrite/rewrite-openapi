@@ -42,5 +42,4 @@ public class MigrateApiParamAllowableValues extends Recipe {
                 new UsesMethod<>("io.swagger.annotations.ApiParam allowableValues()", false),
                 new MigrateApiParamSchemaValue(VBLE_NAME));
     }
- 
 }
