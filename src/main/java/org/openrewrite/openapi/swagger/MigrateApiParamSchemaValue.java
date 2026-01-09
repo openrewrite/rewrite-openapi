@@ -43,10 +43,9 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
 
     @Override
     public Annotation visitAnnotation(Annotation annotation, ExecutionContext ctx) {
-        J.Annotation anno = super.visitAnnotation(annotation, ctx);
-
-        if (!PARAMETER_ANNOTATION_MATCHER.matches(anno)) {
-            return anno;
+        J.Annotation a = super.visitAnnotation(annotation, ctx);
+        if (!PARAMETER_ANNOTATION_MATCHER.matches(a)) {
+            return a;
         }
 
         StringBuilder tpl = new StringBuilder();
@@ -54,8 +53,8 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
 
         SchemaInfo schemaInfo = new SchemaInfo();
 
-        for (Expression exp : anno.getArguments()) {
-            if (isInteresingVble(exp)) {
+        for (Expression exp : a.getArguments()) {
+            if (isAttributeAssignment(exp)) {
                 Expression expression = ((J.Assignment) exp).getAssignment();
                 String schema = createSchema(attribute);
                 schemaInfo.genSchema(schema, expression);
@@ -70,18 +69,17 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
         }
 
         schemaInfo.process(tpl, args);
-
         if (tpl.toString().endsWith(", ")) {
             tpl.delete(tpl.length() - 2, tpl.length());
         }
 
-        anno = JavaTemplate.builder(tpl.toString())
+        maybeAddImport(FQN_SCHEMA, false);
+        a = JavaTemplate.builder(tpl.toString())
                 .imports(FQN_SCHEMA)
                 .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
                 .build()
-                .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
-        maybeAddImport(FQN_SCHEMA, false);
-        return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
+                .apply(updateCursor(a), annotation.getCoordinates().replaceArguments(), args.toArray());
+        return maybeAutoFormat(annotation, a, ctx, getCursor().getParentTreeCursor());
     }
 
     /**
@@ -118,7 +116,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
      * @param exp the {@link Expression} being processed
      * @return    if the identifier of the expression matches the one expected to migrate
      */
-    private boolean isInteresingVble(Expression exp) {
+    private boolean isAttributeAssignment(Expression exp) {
         return exp instanceof J.Assignment && attribute.equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
     }
 
