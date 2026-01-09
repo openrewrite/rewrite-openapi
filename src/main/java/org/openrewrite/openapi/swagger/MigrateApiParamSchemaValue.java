@@ -15,6 +15,8 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
@@ -33,15 +35,12 @@ import java.util.Objects;
  * Utility class that can be used for migrating values of the <code>ApiParam</code> annotation
  * that are contained as part of the <code>Schema</code> annotation in the target <code>Parameter</code> annotation
  */
+@RequiredArgsConstructor
 class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
     private static final AnnotationMatcher PARAMETER_ANNOTATION_MATCHER = new AnnotationMatcher("io.swagger.v3.oas.annotations.Parameter");
 
-    private final String vbleName;
-
-    public MigrateApiParamSchemaValue(String vbleName) {
-        this.vbleName = vbleName;
-    }
+    private final String attribute;
 
     @Override
     public Annotation visitAnnotation(Annotation annotation, ExecutionContext ctx) {
@@ -59,7 +58,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
         for (Expression exp : anno.getArguments()) {
             if (isInteresingVble(exp)) {
                 Expression expression = ((J.Assignment) exp).getAssignment();
-                String schema = createSchema(vbleName);
+                String schema = createSchema(attribute);
                 schemaInfo.genSchema(schema, expression);
             } else {
                 if (isSchemaAssignment(exp)) {
@@ -121,18 +120,18 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
      * @return    if the identifier of the expression matches the one expected to migrate
      */
     private boolean isInteresingVble(Expression exp) {
-        return exp instanceof J.Assignment && vbleName.equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
+        return exp instanceof J.Assignment && attribute.equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
     }
 
     /**
      * Utility class that holds a mapping of the {@link Expression} being migrated (and its generated <code>schema</code> string),
      * with a potential already existing <code>schema</code> entry to merge the information
      */
-    private class SchemaInfo {
+    private static class SchemaInfo {
 
-        private Expression schemaExpr;
-        private String schemaStr;
-        private J.Assignment existingSchemaExpr;
+        private @Nullable Expression schemaExpr;
+        private @Nullable String schemaStr;
+        private J.@Nullable Assignment existingSchemaExpr;
 
         private void genSchema(String schemaStr, Expression schemaExpr) {
             this.schemaExpr = schemaExpr;
@@ -169,12 +168,9 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
                     }
                 }
                 schema.append(")");
-                tpl.append(schema.toString());
+                tpl.append(schema);
                 args.add(schemaExpr);
             }
         }
-
     }
-
-
 }
