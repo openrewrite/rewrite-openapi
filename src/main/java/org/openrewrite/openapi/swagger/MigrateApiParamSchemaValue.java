@@ -29,7 +29,6 @@ import org.openrewrite.java.tree.J.Assignment;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Utility class that can be used for migrating values of the <code>ApiParam</code> annotation
@@ -150,25 +149,18 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
          *             processed
          */
         private void process(StringBuilder tpl, List<Expression> args) {
-            if (Objects.isNull(schemaStr)) {
-                if (Objects.nonNull(existingSchemaExpr)) {
+            if (schemaStr == null) {
+                if (existingSchemaExpr != null) {
                     args.add(existingSchemaExpr);
                 }
             } else {
-                StringBuilder schema = new StringBuilder(schemaStr);
-                if (Objects.nonNull(existingSchemaExpr)) {
-                    Expression schemaAssign = existingSchemaExpr.getAssignment();
-                    if (schemaAssign instanceof J.Annotation) {
-                        List<Expression> schemaArgs = ((J.Annotation) schemaAssign).getArguments();
-                        for (Expression schemaArg : schemaArgs) {
-                            String sa = schemaArg.toString();
-                            schema.append(", ")
-                                    .append(sa);
-                        }
+                tpl.append(schemaStr);
+                if (existingSchemaExpr != null && existingSchemaExpr.getAssignment() instanceof Annotation) {
+                    for (Expression schemaArg : ((Annotation) existingSchemaExpr.getAssignment()).getArguments()) {
+                        tpl.append(", ").append(schemaArg);
                     }
                 }
-                schema.append(")");
-                tpl.append(schema);
+                tpl.append(")");
                 args.add(schemaExpr);
             }
         }
