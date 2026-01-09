@@ -22,7 +22,7 @@ import org.openrewrite.TreeVisitor;
 import org.openrewrite.java.search.UsesMethod;
 
 public class MigrateApiParamDefaultValue extends Recipe {
-	private static final String VBLE_NAME = "defaultValue";
+    private static final String VBLE_NAME = "defaultValue";
 
     @Override
     public String getDisplayName() {

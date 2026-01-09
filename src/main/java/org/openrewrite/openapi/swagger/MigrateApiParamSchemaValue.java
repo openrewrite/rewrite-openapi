@@ -15,10 +15,6 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
@@ -28,6 +24,10 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.J.Annotation;
 import org.openrewrite.java.tree.J.Assignment;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Utility class that can be used for migrating values of the <code>ApiParam</code> annotation
@@ -89,10 +89,10 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
     /**
      * Utility method checking whether a certain expression is the
      * <code>schema</code> assignment
-     * 
+     *
      * @param expr the {@link Expression} being processed
      * @return whether the expression is a <code>schema</code> {@link J.Assignment}
-     *         one
+     * one
      */
     private boolean isSchemaAssignment(Expression expr) {
         if (expr instanceof J.Assignment) {
@@ -106,6 +106,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
 
     /**
      * Creates the string for the <code>schema</code> declaration
+     *
      * @param schemaVble the schema variable assignment to add
      * @return a string with the <code>schema</code> variable declaration for the <code>@Schema</code> annotation
      */
@@ -115,8 +116,9 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
 
     /**
      * Utility method checking whether this expression is the one for the variable we are migrating
-     * @param exp	the {@link Expression} being processed
-     * @return	if the identifier of the expression matches the one expected to migrate
+     *
+     * @param exp the {@link Expression} being processed
+     * @return    if the identifier of the expression matches the one expected to migrate
      */
     private boolean isInteresingVble(Expression exp) {
         return exp instanceof J.Assignment && vbleName.equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
@@ -144,9 +146,9 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
         /**
          * Contains the logic for merging the resulting <code>schema</code>
          *
-         * @param tpl            holds the current result of the annotation processing
-         * @param args           holds the current stack of arguments for the annotation
-         *                       processed
+         * @param tpl  holds the current result of the annotation processing
+         * @param args holds the current stack of arguments for the annotation
+         *             processed
          */
         private void process(StringBuilder tpl, List<Expression> args) {
             if (Objects.isNull(schemaStr)) {
@@ -162,7 +164,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
                         for (Expression schemaArg : schemaArgs) {
                             String sa = schemaArg.toString();
                             schema.append(", ")
-                                  .append(sa);
+                                    .append(sa);
                         }
                     }
                 }
