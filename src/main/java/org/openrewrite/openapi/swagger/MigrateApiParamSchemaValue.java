@@ -54,17 +54,16 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
         StringBuilder tpl = new StringBuilder();
         List<Expression> args = new ArrayList<>();
 
-        SchemaInfo schemaInfo = null;
-        // if (as result of some other processing) we need to merge into an existing 'schema'
-        J.Assignment existingSchemaExpr = null;
+        SchemaInfo schemaInfo = new SchemaInfo();
+
         for (Expression exp : anno.getArguments()) {
             if (isInteresingVble(exp)) {
                 Expression expression = ((J.Assignment) exp).getAssignment();
                 String schema = createSchema(vbleName);
-                schemaInfo = new SchemaInfo(expression, schema);
+                schemaInfo.genSchema(schema, expression);
             } else {
                 if (isSchemaAssignment(exp)) {
-                    existingSchemaExpr = (Assignment) exp;
+                    schemaInfo.existingSchema((Assignment) exp);
                 } else {
                     tpl.append("#{any()}, ");
                     args.add(exp);
@@ -72,7 +71,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
             }
         }
 
-        processSchemaEntry(schemaInfo, existingSchemaExpr, tpl, args);
+        schemaInfo.process(tpl, args);
 
         if (tpl.toString().endsWith(", ")) {
             tpl.delete(tpl.length() - 2, tpl.length());
@@ -124,43 +123,56 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
     }
 
     /**
-     * Contains the logic for merging the resulting <code>schema</code>
-     *
-     * @param schemaInfo     contains the generated schema information, if any
-     * @param existingSchema contains a reference to any existing schema entries
-     * @param tpl            holds the current result of the annotation processing
-     * @param args           holds the current stack of arguments for the annotation
-     *                       processed
+     * Utility class that holds a mapping of the {@link Expression} being migrated (and its generated <code>schema</code> string),
+     * with a potential already existing <code>schema</code> entry to merge the information
      */
-    private void processSchemaEntry(SchemaInfo schemaInfo, J.Assignment existingSchema, StringBuilder tpl, List<Expression> args) {
-        if (Objects.isNull(schemaInfo)) {
-            if (Objects.nonNull(existingSchema)) {
-                args.add(existingSchema);
-            }
-        } else {
-            StringBuilder schema = new StringBuilder(schemaInfo.schemaStr());
-            if (Objects.nonNull(existingSchema)) {
-                Expression schemaAssign = existingSchema.getAssignment();
-                if (schemaAssign instanceof J.Annotation) {
-                    List<Expression> schemaArgs = ((J.Annotation) schemaAssign).getArguments();
-                    for (Expression schemaArg : schemaArgs) {
-                        String sa = schemaArg.toString();
-                        schema.append(", ")
-                              .append(sa);
+    private class SchemaInfo {
+
+        private Expression schemaExpr;
+        private String schemaStr;
+        private J.Assignment existingSchemaExpr;
+
+        private void genSchema(String schemaStr, Expression schemaExpr) {
+            this.schemaExpr = schemaExpr;
+            this.schemaStr = schemaStr;
+        }
+
+        private void existingSchema(J.Assignment existingSchemaExpr) {
+            this.existingSchemaExpr = existingSchemaExpr;
+        }
+
+        /**
+         * Contains the logic for merging the resulting <code>schema</code>
+         *
+         * @param tpl            holds the current result of the annotation processing
+         * @param args           holds the current stack of arguments for the annotation
+         *                       processed
+         */
+        private void process(StringBuilder tpl, List<Expression> args) {
+            if (Objects.isNull(schemaStr)) {
+                if (Objects.nonNull(existingSchemaExpr)) {
+                    args.add(existingSchemaExpr);
+                }
+            } else {
+                StringBuilder schema = new StringBuilder(schemaStr);
+                if (Objects.nonNull(existingSchemaExpr)) {
+                    Expression schemaAssign = existingSchemaExpr.getAssignment();
+                    if (schemaAssign instanceof J.Annotation) {
+                        List<Expression> schemaArgs = ((J.Annotation) schemaAssign).getArguments();
+                        for (Expression schemaArg : schemaArgs) {
+                            String sa = schemaArg.toString();
+                            schema.append(", ")
+                                  .append(sa);
+                        }
                     }
                 }
+                schema.append(")");
+                tpl.append(schema.toString());
+                args.add(schemaExpr);
             }
-            schema.append(")");
-            tpl.append(schema.toString());
-            args.add(schemaInfo.schemaExpr());
         }
+
     }
 
-    /**
-     * Holds a mapping of the {@link Expression} being migrated and the resulting
-     * generated <code>schema</code> string
-     */
-    private record SchemaInfo(Expression schemaExpr, String schemaStr) {
-    }
 
 }
