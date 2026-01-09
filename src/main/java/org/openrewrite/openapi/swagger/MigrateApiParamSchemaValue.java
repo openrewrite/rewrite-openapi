@@ -34,18 +34,18 @@ import org.openrewrite.java.tree.J.Assignment;
  * that are contained as part of the <code>Schema</code> annotation in the target <code>Parameter</code> annotation
  */
 class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
-	private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
-	private static final AnnotationMatcher PARAMETER_ANNOTATION_MATCHER = new AnnotationMatcher("io.swagger.v3.oas.annotations.Parameter");
+    private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
+    private static final AnnotationMatcher PARAMETER_ANNOTATION_MATCHER = new AnnotationMatcher("io.swagger.v3.oas.annotations.Parameter");
 
-	private final String vbleName;
-	
-	public MigrateApiParamSchemaValue(String vbleName) {
-		this.vbleName = vbleName;
-	}
+    private final String vbleName;
 
-	@Override
-	public Annotation visitAnnotation(Annotation annotation, ExecutionContext ctx) {
-		J.Annotation anno = super.visitAnnotation(annotation, ctx);
+    public MigrateApiParamSchemaValue(String vbleName) {
+        this.vbleName = vbleName;
+    }
+
+    @Override
+    public Annotation visitAnnotation(Annotation annotation, ExecutionContext ctx) {
+        J.Annotation anno = super.visitAnnotation(annotation, ctx);
 
         if (!PARAMETER_ANNOTATION_MATCHER.matches(anno)) {
             return anno;
@@ -53,29 +53,31 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
 
         StringBuilder tpl = new StringBuilder();
         List<Expression> args = new ArrayList<>();
-        J.Assignment existingSchemaExpr = null;
+
         SchemaInfo schemaInfo = null;
+        // if (as result of some other processing) we need to merge into an existing 'schema'
+        J.Assignment existingSchemaExpr = null;
         for (Expression exp : anno.getArguments()) {
             if (isInteresingVble(exp)) {
                 Expression expression = ((J.Assignment) exp).getAssignment();
                 String schema = createSchema(vbleName);
                 schemaInfo = new SchemaInfo(expression, schema);
             } else {
-            	if(isSchema(exp)) {
-            		existingSchemaExpr = (Assignment) exp;
-            	} else {
-            		tpl.append("#{any()}, ");
+                if (isSchemaAssignment(exp)) {
+                    existingSchemaExpr = (Assignment) exp;
+                } else {
+                    tpl.append("#{any()}, ");
                     args.add(exp);
-            	}
+                }
             }
         }
 
-        processSchemaEntry(schemaInfo, existingSchemaExpr, tpl, args);                        
+        processSchemaEntry(schemaInfo, existingSchemaExpr, tpl, args);
 
         if (tpl.toString().endsWith(", ")) {
             tpl.delete(tpl.length() - 2, tpl.length());
         }
-        
+
         anno = JavaTemplate.builder(tpl.toString())
                 .imports(FQN_SCHEMA)
                 .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
@@ -83,49 +85,82 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
                 .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
         maybeAddImport(FQN_SCHEMA, false);
         return maybeAutoFormat(annotation, anno, ctx, getCursor().getParentTreeCursor());
-	}
-	
-    private boolean isSchema(Expression expr) {
-    	if(expr instanceof J.Assignment) {
-    		Expression vble = ((J.Assignment) expr).getVariable();
-    		if(vble instanceof J.Identifier) {
-    			return ((J.Identifier)vble).getSimpleName().equals("schema");
-    		}
-    	}
-    	return false;
     }
-    
-    private String createSchema(String key) {
-    	return String.format("schema = @Schema(%s = #{any()} ", key);
+
+    /**
+     * Utility method checking whether a certain expression is the
+     * <code>schema</code> assignment
+     * 
+     * @param expr the {@link Expression} being processed
+     * @return whether the expression is a <code>schema</code> {@link J.Assignment}
+     *         one
+     */
+    private boolean isSchemaAssignment(Expression expr) {
+        if (expr instanceof J.Assignment) {
+            Expression vble = ((J.Assignment) expr).getVariable();
+            if (vble instanceof J.Identifier) {
+                return ((J.Identifier) vble).getSimpleName().equals("schema");
+            }
+        }
+        return false;
     }
-	
-	private boolean isInteresingVble(Expression exp) {
+
+    /**
+     * Creates the string for the <code>schema</code> declaration
+     * @param schemaVble the schema variable assignment to add
+     * @return a string with the <code>schema</code> variable declaration for the <code>@Schema</code> annotation
+     */
+    private String createSchema(String schemaVble) {
+        return String.format("schema = @Schema(%s = #{any()} ", schemaVble);
+    }
+
+    /**
+     * Utility method checking whether this expression is the one for the variable we are migrating
+     * @param exp	the {@link Expression} being processed
+     * @return	if the identifier of the expression matches the one expected to migrate
+     */
+    private boolean isInteresingVble(Expression exp) {
         return exp instanceof J.Assignment && vbleName.equals(((J.Identifier) ((J.Assignment) exp).getVariable()).getSimpleName());
     }
 
-	private void processSchemaEntry(SchemaInfo schemaInfo, J.Assignment existingSchema, StringBuilder tpl, List<Expression> args) {
-    	if(Objects.isNull(schemaInfo)) {
-    		if(Objects.nonNull(existingSchema)) {
-    			args.add(existingSchema);
-    		}
-    	} else {
-    		StringBuilder schema = new StringBuilder(schemaInfo.schemaStr());
-    		if(Objects.nonNull(existingSchema)) {
-    			Expression schemaAssign = existingSchema.getAssignment();
-            	if(schemaAssign instanceof J.Annotation) {
-            		List<Expression> schemaArgs = ((J.Annotation)schemaAssign).getArguments();
-            		for(Expression schemaArg: schemaArgs) {
-            			String sa = schemaArg.toString();
-            			schema.append(", ").append(sa);
-            		}
-            	}
-    		}
-    		schema.append(")");
-    		tpl.append(schema.toString());
-    		args.add(schemaInfo.schemaExpr());
-    	}
+    /**
+     * Contains the logic for merging the resulting <code>schema</code>
+     *
+     * @param schemaInfo     contains the generated schema information, if any
+     * @param existingSchema contains a reference to any existing schema entries
+     * @param tpl            holds the current result of the annotation processing
+     * @param args           holds the current stack of arguments for the annotation
+     *                       processed
+     */
+    private void processSchemaEntry(SchemaInfo schemaInfo, J.Assignment existingSchema, StringBuilder tpl, List<Expression> args) {
+        if (Objects.isNull(schemaInfo)) {
+            if (Objects.nonNull(existingSchema)) {
+                args.add(existingSchema);
+            }
+        } else {
+            StringBuilder schema = new StringBuilder(schemaInfo.schemaStr());
+            if (Objects.nonNull(existingSchema)) {
+                Expression schemaAssign = existingSchema.getAssignment();
+                if (schemaAssign instanceof J.Annotation) {
+                    List<Expression> schemaArgs = ((J.Annotation) schemaAssign).getArguments();
+                    for (Expression schemaArg : schemaArgs) {
+                        String sa = schemaArg.toString();
+                        schema.append(", ")
+                              .append(sa);
+                    }
+                }
+            }
+            schema.append(")");
+            tpl.append(schema.toString());
+            args.add(schemaInfo.schemaExpr());
+        }
     }
-	
-	private record SchemaInfo(Expression schemaExpr, String schemaStr) { }
-	
+
+    /**
+     * Holds a mapping of the {@link Expression} being migrated and the resulting
+     * generated <code>schema</code> string
+     */
+    private record SchemaInfo(Expression schemaExpr, String schemaStr) {
+    }
+
 }
