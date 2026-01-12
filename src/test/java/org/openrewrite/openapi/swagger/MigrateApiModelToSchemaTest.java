@@ -131,14 +131,30 @@ class MigrateApiModelToSchemaTest implements RewriteTest {
               import io.swagger.annotations.ApiModel;
 
               @ApiModel(reference = "https://example.com/schemas/MySchema")
-              class Example {
+              class RemoteReference {
               }
               """,
             """
               import io.swagger.v3.oas.annotations.media.Schema;
 
               @Schema(ref = "https://example.com/schemas/MySchema")
-              class Example {
+              class RemoteReference {
+              }
+              """
+          ),
+          java(
+            """
+              import io.swagger.annotations.ApiModel;
+
+              @ApiModel(reference = "#/schemas/MySchema")
+              class LocalReference {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              @Schema(ref = "#/schemas/MySchema")
+              class LocalReference {
               }
               """
           )

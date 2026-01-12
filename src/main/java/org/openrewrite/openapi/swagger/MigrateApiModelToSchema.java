@@ -97,7 +97,7 @@ public class MigrateApiModelToSchema extends Recipe {
                         return;
                     }
                     String referenceValue = literal.getValue().toString();
-                    if (referenceValue.contains("://")) {
+                    if (referenceValue.contains("://") || referenceValue.contains("#")) {
                         // It's a URL - rename 'reference' to 'ref'
                         // Use SCHEMA_FQN because ChangeType runs before this, converting to @Schema
                         doAfterVisit(new ChangeAnnotationAttributeName(SCHEMA_FQN, "reference", "ref").getVisitor());
