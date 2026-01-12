@@ -121,4 +121,66 @@ class MigrateApiModelToSchemaTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void shouldMigrateUrlReferenceToRef() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiModel;
+
+              @ApiModel(reference = "https://example.com/schemas/MySchema")
+              class RemoteReference {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              @Schema(ref = "https://example.com/schemas/MySchema")
+              class RemoteReference {
+              }
+              """
+          ),
+          java(
+            """
+              import io.swagger.annotations.ApiModel;
+
+              @ApiModel(reference = "#/schemas/MySchema")
+              class LocalReference {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              @Schema(ref = "#/schemas/MySchema")
+              class LocalReference {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void shouldMigrateClassReferenceToImplementation() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiModel;
+
+              @ApiModel(reference = "String")
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              @Schema(implementation = String.class)
+              class Example {
+              }
+              """
+          )
+        );
+    }
 }

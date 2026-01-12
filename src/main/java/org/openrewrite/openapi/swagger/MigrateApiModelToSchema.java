@@ -15,15 +15,9 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.ChangeAnnotationAttributeName;
-import org.openrewrite.java.ChangeType;
-import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
@@ -71,6 +65,10 @@ public class MigrateApiModelToSchema extends Recipe {
                                 J.Assignment value = annotationAssignments.remove("value");
                                 annotationAssignments.put("name", value.withVariable(((J.Identifier) value.getVariable()).withSimpleName("name")));
                             }
+
+                            // Handle 'reference' attribute migration
+                            handleReferenceAttribute(annotationAssignments);
+
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, API_MODEL_FQN, annotationAssignments);
                         } else if (SCHEMA_MATCHER.matches(annotation)) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, SCHEMA_FQN, "USING SCHEMA ALREADY");
@@ -78,6 +76,38 @@ public class MigrateApiModelToSchema extends Recipe {
                     }
 
                     return annotation;
+                }
+
+                /**
+                 * Handle the 'reference' attribute from @ApiModel.
+                 * - If the value looks like a URL, rename to 'ref'
+                 * - If the value looks like a class name, schedule conversion to 'implementation = ClassName.class'
+                 */
+                private void handleReferenceAttribute(Map<String, J.Assignment> annotationAssignments) {
+                    if (!annotationAssignments.containsKey("reference")) {
+                        return;
+                    }
+
+                    J.Assignment referenceAssignment = annotationAssignments.get("reference");
+                    if (!(referenceAssignment.getAssignment() instanceof J.Literal)) {
+                        return; // Not a string literal, leave as-is (will likely fail compilation anyway)
+                    }
+                    J.Literal literal = (J.Literal) referenceAssignment.getAssignment();
+                    if (literal.getValue() == null) {
+                        return;
+                    }
+                    String referenceValue = literal.getValue().toString();
+                    if (referenceValue.contains("://") || referenceValue.contains("#")) {
+                        // It's a URL - rename 'reference' to 'ref'
+                        // Use SCHEMA_FQN because ChangeType runs before this, converting to @Schema
+                        doAfterVisit(new ChangeAnnotationAttributeName(SCHEMA_FQN, "reference", "ref").getVisitor());
+                    } else {
+                        // It's a class name - schedule a visitor to convert to 'implementation = ClassName.class'
+                        // This runs after ChangeType converts @ApiModel to @Schema
+                        doAfterVisit(typeReferenceVisitor(referenceValue));
+                    }
+                    // Remove from map so it won't be added again during merge
+                    annotationAssignments.remove("reference");
                 }
 
                 @Override
@@ -107,5 +137,32 @@ public class MigrateApiModelToSchema extends Recipe {
                 }
             }
         );
+    }
+
+    private JavaIsoVisitor<ExecutionContext> typeReferenceVisitor(String referenceValue) {
+        return new JavaIsoVisitor<ExecutionContext>() {
+            @Override
+            public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
+                J.Annotation ann = super.visitAnnotation(annotation, ctx);
+                if (!SCHEMA_MATCHER.matches(ann) || ann.getArguments() == null) {
+                    return ann;
+                }
+
+                // Replace the 'reference' attribute with 'implementation = ClassName.class'
+                return ann.withArguments(ListUtils.map(ann.getArguments(), arg -> {
+                    if (arg instanceof J.Assignment) {
+                        J.Assignment assign = (J.Assignment) arg;
+                        if (assign.getVariable() instanceof J.Identifier &&
+                                "reference".equals(((J.Identifier) assign.getVariable()).getSimpleName())) {
+                            return JavaTemplate.builder("implementation = " + referenceValue + ".class")
+                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
+                                    .build()
+                                    .apply(new Cursor(getCursor(), arg), arg.getCoordinates().replace());
+                        }
+                    }
+                    return arg;
+                }));
+            }
+        };
     }
 }
