@@ -15,18 +15,9 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import org.jspecify.annotations.NonNull;
-import org.openrewrite.ExecutionContext;
-import org.openrewrite.Preconditions;
-import org.openrewrite.Recipe;
-import org.openrewrite.TreeVisitor;
+import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.ChangeAnnotationAttributeName;
-import org.openrewrite.java.ChangeType;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
@@ -159,47 +150,24 @@ public class MigrateApiModelToSchema extends Recipe {
             @Override
             public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                 J.Annotation ann = super.visitAnnotation(annotation, ctx);
-
                 if (!SCHEMA_MATCHER.matches(ann) || ann.getArguments() == null) {
                     return ann;
                 }
 
-                boolean hasReference = ann.getArguments().stream()
-                        .filter(arg -> arg instanceof J.Assignment)
-                        .map(arg -> (J.Assignment) arg)
-                        .anyMatch(assign -> assign.getVariable() instanceof J.Identifier &&
-                                "reference".equals(((J.Identifier) assign.getVariable()).getSimpleName()));
-
-                if (!hasReference) {
-                    return ann;
-                }
-
-                // Remove the 'reference' attribute
-                List<Expression> filteredArgs = ListUtils.map(ann.getArguments(), arg -> {
+                // Replace the 'reference' attribute with 'implementation = ClassName.class'
+                return ann.withArguments(ListUtils.map(ann.getArguments(), arg -> {
                     if (arg instanceof J.Assignment) {
                         J.Assignment assign = (J.Assignment) arg;
                         if (assign.getVariable() instanceof J.Identifier &&
                                 "reference".equals(((J.Identifier) assign.getVariable()).getSimpleName())) {
-                            return null;
+                            return JavaTemplate.builder("implementation = " + referenceValue + ".class")
+                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
+                                    .build()
+                                    .apply(new Cursor(getCursor(), arg), arg.getCoordinates().replace());
                         }
                     }
                     return arg;
-                });
-
-                // Build the new annotation with 'implementation = ClassName.class'
-                String args = filteredArgs.isEmpty() ? "" :
-                        filteredArgs.stream()
-                                .map(Object::toString)
-                                .reduce((a, b) -> a + ", " + b)
-                                .orElse("");
-                String template = args.isEmpty() ?
-                        "implementation = " + referenceValue + ".class" :
-                        args + ", implementation = " + referenceValue + ".class";
-
-                return JavaTemplate.builder(template)
-                        .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
-                        .build()
-                        .apply(getCursor(), ann.getCoordinates().replaceArguments());
+                }));
             }
         };
     }
