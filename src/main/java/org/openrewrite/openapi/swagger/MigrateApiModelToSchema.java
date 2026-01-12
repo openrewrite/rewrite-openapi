@@ -67,7 +67,7 @@ public class MigrateApiModelToSchema extends Recipe {
                             }
 
                             // Handle 'reference' attribute migration
-                            handleReferenceAttribute(annotation, annotationAssignments, ctx);
+                            handleReferenceAttribute(annotationAssignments);
 
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, API_MODEL_FQN, annotationAssignments);
                         } else if (SCHEMA_MATCHER.matches(annotation)) {
@@ -83,26 +83,20 @@ public class MigrateApiModelToSchema extends Recipe {
                  * - If the value looks like a URL, rename to 'ref'
                  * - If the value looks like a class name, schedule conversion to 'implementation = ClassName.class'
                  */
-                private void handleReferenceAttribute(J.Annotation annotation, Map<String, J.Assignment> annotationAssignments, ExecutionContext ctx) {
+                private void handleReferenceAttribute(Map<String, J.Assignment> annotationAssignments) {
                     if (!annotationAssignments.containsKey("reference")) {
                         return;
                     }
 
                     J.Assignment referenceAssignment = annotationAssignments.get("reference");
-                    Expression assignmentExpr = referenceAssignment.getAssignment();
-
-                    if (!(assignmentExpr instanceof J.Literal)) {
-                        // Not a string literal, leave as-is (will likely fail compilation anyway)
-                        return;
+                    if (!(referenceAssignment.getAssignment() instanceof J.Literal)) {
+                        return; // Not a string literal, leave as-is (will likely fail compilation anyway)
                     }
-
-                    J.Literal literal = (J.Literal) assignmentExpr;
+                    J.Literal literal = (J.Literal) referenceAssignment.getAssignment();
                     if (literal.getValue() == null) {
                         return;
                     }
-
                     String referenceValue = literal.getValue().toString();
-
                     if (referenceValue.contains("://")) {
                         // It's a URL - rename 'reference' to 'ref'
                         // Use SCHEMA_FQN because ChangeType runs before this, converting to @Schema
