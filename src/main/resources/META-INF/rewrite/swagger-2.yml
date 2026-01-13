@@ -75,6 +75,10 @@ recipeList:
       newArtifactId: swagger-integration-jakarta
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-jersey2-jaxrs
+      newArtifactId: swagger-jaxrs2
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-jaxrs2
       newArtifactId: swagger-jaxrs2-jakarta
   - org.openrewrite.java.dependencies.ChangeDependency:
