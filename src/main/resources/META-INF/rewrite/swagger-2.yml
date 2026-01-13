@@ -28,6 +28,10 @@ recipeList:
       oldArtifactId: swagger-*
       newGroupId: io.swagger.core.v3
       newVersion: 2.2.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger.core.v3
+      oldArtifactId: swagger-jersey2-jaxrs
+      newArtifactId: swagger-jaxrs2
   # https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations
   # https://springdoc.org/#migrating-from-springfox
   - org.openrewrite.java.ChangeType:
@@ -73,10 +77,6 @@ recipeList:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-integration
       newArtifactId: swagger-integration-jakarta
-  - org.openrewrite.java.dependencies.ChangeDependency:
-      oldGroupId: io.swagger.core.v3
-      oldArtifactId: swagger-jersey2-jaxrs
-      newArtifactId: swagger-jaxrs2
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger.core.v3
       oldArtifactId: swagger-jaxrs2
