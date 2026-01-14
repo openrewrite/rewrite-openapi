@@ -265,7 +265,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
           )
         );
     }
-    
+
     @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
         rewriteRun(
