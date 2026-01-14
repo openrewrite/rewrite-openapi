@@ -25,6 +25,12 @@ recipeList:
   # Relocated artifacts https://mvnrepository.com/artifact/io.swagger
   - org.openrewrite.java.dependencies.ChangeDependency:
       oldGroupId: io.swagger
+      oldArtifactId: swagger-jersey2-jaxrs
+      newGroupId: io.swagger.core.v3
+      newArtifactId: swagger-jaxrs2
+      newVersion: 2.2.x
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.swagger
       oldArtifactId: swagger-*
       newGroupId: io.swagger.core.v3
       newVersion: 2.2.x
