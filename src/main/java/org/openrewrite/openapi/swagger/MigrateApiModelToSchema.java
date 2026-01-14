@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.*;
@@ -37,15 +38,11 @@ public class MigrateApiModelToSchema extends Recipe {
     private static final AnnotationMatcher API_MODEL_MATCHER = new AnnotationMatcher(API_MODEL_FQN);
     private static final AnnotationMatcher SCHEMA_MATCHER = new AnnotationMatcher(SCHEMA_FQN);
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate from `@ApiModel` to `@Schema`";
-    }
+    @Getter
+    final String displayName = "Migrate from `@ApiModel` to `@Schema`";
 
-    @Override
-    public String getDescription() {
-        return "Converts the `@ApiModel` annotation to `@Schema` and converts the \"value\" attribute to \"name\".";
-    }
+    @Getter
+    final String description = "Converts the `@ApiModel` annotation to `@Schema` and converts the \"value\" attribute to \"name\".";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

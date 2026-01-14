@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -31,15 +32,11 @@ public class ConvertApiResponseCodesToStrings extends Recipe {
 
     private static final AnnotationMatcher ANNOTATION_MATCHER = new AnnotationMatcher("@io.swagger.v3.oas.annotations.responses.ApiResponse");
 
-    @Override
-    public String getDisplayName() {
-        return "Convert API response codes to strings";
-    }
+    @Getter
+    final String displayName = "Convert API response codes to strings";
 
-    @Override
-    public String getDescription() {
-        return "Convert API response codes to strings.";
-    }
+    @Getter
+    final String description = "Convert API response codes to strings.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

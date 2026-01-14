@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -35,15 +36,11 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
     private static final String FQN_OPENAPI_DEFINITION = "io.swagger.v3.oas.annotations.OpenAPIDefinition";
     private static final String FQN_SERVER = "io.swagger.v3.oas.annotations.servers.Server";
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate from `@SwaggerDefinition` to `@OpenAPIDefinition`";
-    }
+    @Getter
+    final String displayName = "Migrate from `@SwaggerDefinition` to `@OpenAPIDefinition`";
 
-    @Override
-    public String getDescription() {
-        return "Migrate from `@SwaggerDefinition` to `@OpenAPIDefinition`.";
-    }
+    @Getter
+    final String description = "Migrate from `@SwaggerDefinition` to `@OpenAPIDefinition`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

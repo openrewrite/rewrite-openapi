@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -24,15 +25,11 @@ import org.openrewrite.java.search.UsesMethod;
 public class MigrateApiParamDefaultValue extends Recipe {
     private static final String VBLE_NAME = "defaultValue";
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema)`";
-    }
+    @Getter
+    final String displayName = "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema)`";
 
-    @Override
-    public String getDescription() {
-        return "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema = @Schema(defaultValue))`.";
-    }
+    @Getter
+    final String description = "Migrate `@ApiParam(defaultValue)` to `@Parameter(schema = @Schema(defaultValue))`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

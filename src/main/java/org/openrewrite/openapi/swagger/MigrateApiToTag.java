@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
@@ -83,15 +84,11 @@ public class MigrateApiToTag extends Recipe {
             "    String description() default \"\";\n" +
             "}";
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate from `@Api` to `@Tag`";
-    }
+    @Getter
+    final String displayName = "Migrate from `@Api` to `@Tag`";
 
-    @Override
-    public String getDescription() {
-        return "Converts `@Api` to `@Tag` annotation and converts the directly mappable attributes and removes the others.";
-    }
+    @Getter
+    final String description = "Converts `@Api` to `@Tag` annotation and converts the directly mappable attributes and removes the others.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

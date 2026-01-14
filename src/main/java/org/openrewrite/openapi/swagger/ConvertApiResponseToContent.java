@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -40,15 +41,11 @@ public class ConvertApiResponseToContent extends Recipe {
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
     private static final String FQN_ARRAYSCHEMA = "io.swagger.v3.oas.annotations.media.ArraySchema";
 
-    @Override
-    public String getDisplayName() {
-        return "Convert API response to content annotation";
-    }
+    @Getter
+    final String displayName = "Convert API response to content annotation";
 
-    @Override
-    public String getDescription() {
-        return "Add `content = @Content(mediaType = ...)` and `schema` to `@ApiResponse`.";
-    }
+    @Getter
+    final String description = "Add `content = @Content(mediaType = ...)` and `schema` to `@ApiResponse`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

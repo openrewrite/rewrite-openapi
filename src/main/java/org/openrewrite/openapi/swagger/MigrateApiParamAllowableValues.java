@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -25,15 +26,11 @@ public class MigrateApiParamAllowableValues extends Recipe {
 
     private static final String VBLE_NAME = "allowableValues";
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate `@ApiParam(allowableValues)` to `@Parameter(schema)`";
-    }
+    @Getter
+    final String displayName = "Migrate `@ApiParam(allowableValues)` to `@Parameter(schema)`";
 
-    @Override
-    public String getDescription() {
-        return "Migrate `@ApiParam(allowableValues)` to `@Parameter(schema = @Schema(allowableValues))`.";
-    }
+    @Getter
+    final String description = "Migrate `@ApiParam(allowableValues)` to `@Parameter(schema = @Schema(allowableValues))`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {

@@ -15,6 +15,7 @@
  */
 package org.openrewrite.openapi.swagger;
 
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -33,15 +34,11 @@ import java.util.List;
 public class MigrateApiImplicitParam extends Recipe {
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
 
-    @Override
-    public String getDisplayName() {
-        return "Migrate `@ApiImplicitParam` to `@Parameter`";
-    }
+    @Getter
+    final String displayName = "Migrate `@ApiImplicitParam` to `@Parameter`";
 
-    @Override
-    public String getDescription() {
-        return "Migrate `@ApiImplicitParam` to `@Parameter`.";
-    }
+    @Getter
+    final String description = "Migrate `@ApiImplicitParam` to `@Parameter`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
