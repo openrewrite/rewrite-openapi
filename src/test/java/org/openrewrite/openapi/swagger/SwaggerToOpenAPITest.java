@@ -85,6 +85,16 @@ class SwaggerToOpenAPITest implements RewriteTest {
                     <artifactId>swagger-core</artifactId>
                     <version>1.6.14</version>
                   </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-jersey2-jaxrs</artifactId>
+                    <version>1.6.14</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger</groupId>
+                    <artifactId>swagger-jaxrs</artifactId>
+                    <version>1.6.14</version>
+                  </dependency>
                 </dependencies>
               </project>
               """,
@@ -108,6 +118,11 @@ class SwaggerToOpenAPITest implements RewriteTest {
                   <dependency>
                     <groupId>io.swagger.core.v3</groupId>
                     <artifactId>swagger-core</artifactId>
+                    <version>%1$s</version>
+                  </dependency>
+                  <dependency>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-jaxrs2</artifactId>
                     <version>%1$s</version>
                   </dependency>
                 </dependencies>
