@@ -15,29 +15,22 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import lombok.Getter;
 import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
-import org.openrewrite.java.AnnotationMatcher;
-import org.openrewrite.java.ChangeAnnotationAttributeName;
-import org.openrewrite.java.ChangeType;
-import org.openrewrite.java.JavaIsoVisitor;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.JavaTemplate;
-import org.openrewrite.java.RemoveAnnotationAttribute;
+import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.J.Annotation;
 
-import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
