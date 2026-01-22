@@ -278,7 +278,7 @@ public class MigrateApiToTag extends Recipe {
                         Expression valueExpression = authAssignments.get("value").getAssignment();
                         templateArgs.add(valueExpression);
 
-                        if(authAssignments.containsKey("scopes")) {
+                        if (authAssignments.containsKey("scopes")) {
                             Expression scopesExpression = authAssignments.get("scopes").getAssignment();
                             processScopes(scopesExpression, template, templateArgs);
                         }
@@ -291,10 +291,10 @@ public class MigrateApiToTag extends Recipe {
                     maybeAddImport(FQN_SECURITY_REQS);
                     maybeAddImport(FQN_SECURITY_REQ);
                     return JavaTemplate.builder(template.toString())
-                        .imports(FQN_SECURITY_REQS, FQN_SECURITY_REQ)
-                        .javaParser(JavaParser.fromJavaVersion().dependsOn(SECURITY_REQS_CLASS, SECURITY_REQ_CLASS))
-                        .build()
-                        .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
+                            .imports(FQN_SECURITY_REQS, FQN_SECURITY_REQ)
+                            .javaParser(JavaParser.fromJavaVersion().dependsOn(SECURITY_REQS_CLASS, SECURITY_REQ_CLASS))
+                            .build()
+                            .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
                 }
 
                 private J.ClassDeclaration addSecurityRequirementAnnotation(J.ClassDeclaration cd, J.Annotation authAnnotation) {
@@ -306,7 +306,7 @@ public class MigrateApiToTag extends Recipe {
 
                     templateArgs.add(authAssignments.get("value").getAssignment());
 
-                    if(authAssignments.containsKey("scopes")) {
+                    if (authAssignments.containsKey("scopes")) {
                         Expression scopesExpression = authAssignments.get("scopes").getAssignment();
                         processScopes(scopesExpression, template, templateArgs);
                     }
@@ -316,30 +316,30 @@ public class MigrateApiToTag extends Recipe {
                     maybeRemoveImport(FQN_AUTHORIZATION);
                     maybeAddImport(FQN_SECURITY_REQ);
                     return JavaTemplate.builder(template.toString())
-                        .imports(FQN_SECURITY_REQ)
-                        .javaParser(JavaParser.fromJavaVersion().dependsOn(SECURITY_REQS_CLASS, SECURITY_REQ_CLASS))
-                        .build()
-                        .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
+                            .imports(FQN_SECURITY_REQ)
+                            .javaParser(JavaParser.fromJavaVersion().dependsOn(SECURITY_REQS_CLASS, SECURITY_REQ_CLASS))
+                            .build()
+                            .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
                 }
 
                 private void processScopes(Expression scopesExpression, StringBuilder template, List<Expression> templateArgs) {
                     if (scopesExpression instanceof J.NewArray) {
-                        List<Expression> scopesArr = requireNonNull(((J.NewArray)scopesExpression).getInitializer());
+                        List<Expression> scopesArr = requireNonNull(((J.NewArray) scopesExpression).getInitializer());
                         template.append(", scopes = {");
                         StringBuilder scopesSb = new StringBuilder();
-                        for(Expression scopeExpression : scopesArr) {
-                            if(scopesSb.length() > 0) {
+                        for (Expression scopeExpression : scopesArr) {
+                            if (scopesSb.length() > 0) {
                                 scopesSb.append(", ");
                             }
                             scopesSb.append("#{any()}");
                             Expression scope = extractScopeFromAnnotation((Annotation) scopeExpression);
                             templateArgs.add(scope);
                         }
-                        template.append(scopesSb.toString());
+                        template.append(scopesSb);
                         template.append("}");
                     } else if (scopesExpression instanceof J.Annotation) {
                         Expression scope = extractScopeFromAnnotation((Annotation) scopesExpression);
-                        if(scope != null) {
+                        if (scope != null) {
                             template.append(", scopes = #{any()}");
                             templateArgs.add(scope);
                         }
@@ -350,9 +350,7 @@ public class MigrateApiToTag extends Recipe {
                     maybeRemoveImport(FQN_AUTHORIZATION_SCOPE);
                     Map<String, J.Assignment> scopeAssignments = AnnotationUtils.extractArgumentAssignments(scopeAnnotation);
                     return scopeAssignments.get("scope").getAssignment();
-
                 }
-
             }
         );
     }
