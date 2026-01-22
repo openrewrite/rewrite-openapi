@@ -337,7 +337,7 @@ public class MigrateApiToTag extends Recipe {
                         template.append(", scopes = {");
                         StringBuilder scopesSb = new StringBuilder();
                         for(Expression scopeExpression : scopesArr) {
-                            if(!scopesSb.isEmpty()) {
+                            if(scopesSb.length() > 0) {
                                 scopesSb.append(", ");
                             }
                             scopesSb.append("#{any()}");
