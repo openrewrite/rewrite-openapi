@@ -166,4 +166,128 @@ class MigrateApiToTagTest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void single_with_auth() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+              import io.swagger.annotations.Authorization;
+
+              @Api(value = "Bar", produces = "application/json", authorizations = @Authorization(value="basic"))
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "Bar")
+              @SecurityRequirement(name = "basic")
+              class Example {}
+              """
+          )
+        );
+    }
+
+    @Test
+    void single_with_multiple_auth() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+              import io.swagger.annotations.Authorization;
+
+              @Api(value = "Bar", produces = "application/json", authorizations = {@Authorization(value="basic"), @Authorization(value="custom")})
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+              import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "Bar")
+              @SecurityRequirements({@SecurityRequirement(name = "basic"), @SecurityRequirement(name = "custom")})
+              class Example {}
+              """
+          )
+        );
+    }
+
+    @Test
+    void single_with_singleAuthAsArrayauth() {
+        rewriteRun(
+          //language=java
+          java(
+                """
+                  import io.swagger.annotations.Api;
+                  import io.swagger.annotations.Authorization;
+
+                  @Api(value = "Bar", produces = "application/json", authorizations = {@Authorization(value="basic")})
+                  class Example {}
+                  """,
+                """
+                  import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+                  import io.swagger.v3.oas.annotations.tags.Tag;
+
+                  @Tag(name = "Bar")
+                  @SecurityRequirement(name = "basic")
+                  class Example {}
+                  """
+          )
+        );
+    }
+
+    @Test
+    void single_with_auth_with_singleScope() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+              import io.swagger.annotations.Authorization;
+              import io.swagger.annotations.AuthorizationScope;
+
+              @Api(value = "Bar", produces = "application/json", authorizations = @Authorization(value="basic", scopes = @AuthorizationScope(scope = "scope1", description = "scope1desc")))
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "Bar")
+              @SecurityRequirement(name = "basic", scopes = "scope1")
+              class Example {}
+              """
+          )
+        );
+    }
+
+    @Test
+    void single_with_auth_with_multiScope() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+              import io.swagger.annotations.Authorization;
+              import io.swagger.annotations.AuthorizationScope;
+
+              @Api(value = "Bar", produces = "application/json", authorizations = @Authorization(value="basic", scopes = {@AuthorizationScope(scope = "scope1", description = "scope1desc"), @AuthorizationScope(scope = "scope2", description = "scope2desc")}))
+              class Example {}
+              """,
+            """
+              import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+              import io.swagger.v3.oas.annotations.tags.Tag;
+
+              @Tag(name = "Bar")
+              @SecurityRequirement(name = "basic", scopes = {"scope1", "scope2"})
+              class Example {}
+              """
+          )
+        );
+    }
+
 }
