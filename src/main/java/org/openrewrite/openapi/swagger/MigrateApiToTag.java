@@ -28,10 +28,9 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.J.Annotation;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
@@ -68,9 +67,9 @@ public class MigrateApiToTag extends Recipe {
             "import java.lang.annotation.Retention;\n" +
             "import java.lang.annotation.RetentionPolicy;\n" +
             "import java.lang.annotation.Target;\n" +
-            "import static java.lang.annotation.ElementType.ANNOTATION_TYPE" +
-            "import static java.lang.annotation.ElementType.TYPE" +
-            "import static java.lang.annotation.ElementType.METHOD" +
+            "import static java.lang.annotation.ElementType.ANNOTATION_TYPE;\n" +
+            "import static java.lang.annotation.ElementType.TYPE;\n" +
+            "import static java.lang.annotation.ElementType.METHOD;\n" +
             "@Target({METHOD, TYPE, ANNOTATION_TYPE})\n" +
             "@Retention(RetentionPolicy.RUNTIME)\n" +
             "@Repeatable(SecurityRequirements.class)\n" +
@@ -87,9 +86,9 @@ public class MigrateApiToTag extends Recipe {
             "import java.lang.annotation.Retention;\n" +
             "import java.lang.annotation.RetentionPolicy;\n" +
             "import java.lang.annotation.Target;\n" +
-            "import static java.lang.annotation.ElementType.ANNOTATION_TYPE" +
-            "import static java.lang.annotation.ElementType.TYPE" +
-            "import static java.lang.annotation.ElementType.METHOD" +
+            "import static java.lang.annotation.ElementType.ANNOTATION_TYPE;\n" +
+            "import static java.lang.annotation.ElementType.TYPE;\n" +
+            "import static java.lang.annotation.ElementType.METHOD;\n" +
             "@Target({METHOD, TYPE, ANNOTATION_TYPE})\n" +
             "@Retention(RetentionPolicy.RUNTIME)\n" +
             "@Inherited\n" +
@@ -147,7 +146,6 @@ public class MigrateApiToTag extends Recipe {
                         doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "hidden").getVisitor());
                         doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "produces").getVisitor());
                         doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "authorizations").getVisitor());
-                        doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
 
                         Map<String, Expression> annoAssignments = AnnotationUtils.extractArgumentAssignedExpressions(ann);
                         if (annoAssignments.containsKey("tags") || annoAssignments.containsKey("hidden") || annoAssignments.containsKey("authorizations")) {
@@ -357,5 +355,10 @@ public class MigrateApiToTag extends Recipe {
 
             }
         );
+    }
+
+    @Override
+    public List<Recipe> getRecipeList() {
+        return singletonList(new ChangeType(FQN_API, FQN_TAG, true));
     }
 }
