@@ -15,9 +15,6 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import static java.util.Comparator.comparing;
-import static java.util.Objects.requireNonNull;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +38,9 @@ import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.J.Annotation;
 
 import lombok.Getter;
+
+import static java.util.Comparator.comparing;
+import static java.util.Objects.requireNonNull;
 
 public class MigrateApiToTag extends Recipe {
 
