@@ -26,20 +26,26 @@ import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.J.Annotation;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
 public class MigrateApiToTag extends Recipe {
 
     private static final String FQN_API = "io.swagger.annotations.Api";
+    private static final String FQN_AUTHORIZATION = "io.swagger.annotations.Authorization";
+    private static final String FQN_AUTHORIZATION_SCOPE = "io.swagger.annotations.AuthorizationScope";
     private static final String FQN_TAG = "io.swagger.v3.oas.annotations.tags.Tag";
     private static final String FQN_TAGS = "io.swagger.v3.oas.annotations.tags.Tags";
     private static final String FQN_HIDDEN = "io.swagger.v3.oas.annotations.Hidden";
+    private static final String FQN_SECURITY_REQ = "io.swagger.v3.oas.annotations.security.SecurityRequirement";
+    private static final String FQN_SECURITY_REQS = "io.swagger.v3.oas.annotations.security.SecurityRequirements";
 
     @Language("java")
     private static final String HIDDEN_CLASS =
@@ -54,6 +60,43 @@ public class MigrateApiToTag extends Recipe {
                 "@Target({METHOD, TYPE, FIELD, ANNOTATION_TYPE})\n" +
                 "@Retention(RetentionPolicy.RUNTIME)\n" +
                 "public @interface Hidden {}";
+
+    @Language("java")
+    private static final String SECURITY_REQ_CLASS =
+        "package io.swagger.v3.oas.annotations.security;\n" +
+            "import java.lang.annotation.Inherited;\n" +
+            "import java.lang.annotation.Repeatable;\n" +
+            "import java.lang.annotation.Retention;\n" +
+            "import java.lang.annotation.RetentionPolicy;\n" +
+            "import java.lang.annotation.Target;\n" +
+            "import static java.lang.annotation.ElementType.ANNOTATION_TYPE;\n" +
+            "import static java.lang.annotation.ElementType.TYPE;\n" +
+            "import static java.lang.annotation.ElementType.METHOD;\n" +
+            "@Target({METHOD, TYPE, ANNOTATION_TYPE})\n" +
+            "@Retention(RetentionPolicy.RUNTIME)\n" +
+            "@Repeatable(SecurityRequirements.class)\n" +
+            "@Inherited\n" +
+            "public @interface SecurityRequirement {\n" +
+            "    String name();\n" +
+            "    String[] scopes() default {};\n" +
+            "}";
+
+    @Language("java")
+    private static final String SECURITY_REQS_CLASS =
+        "package io.swagger.v3.oas.annotations.security;\n" +
+            "import java.lang.annotation.Inherited;\n" +
+            "import java.lang.annotation.Retention;\n" +
+            "import java.lang.annotation.RetentionPolicy;\n" +
+            "import java.lang.annotation.Target;\n" +
+            "import static java.lang.annotation.ElementType.ANNOTATION_TYPE;\n" +
+            "import static java.lang.annotation.ElementType.TYPE;\n" +
+            "import static java.lang.annotation.ElementType.METHOD;\n" +
+            "@Target({METHOD, TYPE, ANNOTATION_TYPE})\n" +
+            "@Retention(RetentionPolicy.RUNTIME)\n" +
+            "@Inherited\n" +
+            "public @interface SecurityRequirements {\n" +
+            "    SecurityRequirement[] value() default {};\n" +
+            "}";
 
     @Language("java")
     private static final String TAGS_CLASS =
@@ -104,10 +147,10 @@ public class MigrateApiToTag extends Recipe {
                         doAfterVisit(new ChangeAnnotationAttributeName(FQN_API, "value", "name").getVisitor());
                         doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "hidden").getVisitor());
                         doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "produces").getVisitor());
-                        doAfterVisit(new ChangeType(FQN_API, FQN_TAG, true).getVisitor());
+                        doAfterVisit(new RemoveAnnotationAttribute(FQN_API, "authorizations").getVisitor());
 
                         Map<String, Expression> annoAssignments = AnnotationUtils.extractArgumentAssignedExpressions(ann);
-                        if (annoAssignments.containsKey("tags") || annoAssignments.containsKey("hidden")) {
+                        if (annoAssignments.containsKey("tags") || annoAssignments.containsKey("hidden") || annoAssignments.containsKey("authorizations")) {
                             getCursor().putMessageOnFirstEnclosing(J.ClassDeclaration.class, FQN_API, annoAssignments);
                         }
                         // Remove @Api and add @Tag or @Tags at class level
@@ -140,6 +183,21 @@ public class MigrateApiToTag extends Recipe {
                         }
                     }
 
+                    Expression authAssignment = annoArguments.get("authorizations");
+                    if (authAssignment != null) {
+                        if (authAssignment instanceof J.NewArray) {
+                            J.NewArray newArray = (J.NewArray) authAssignment;
+                            List<Expression> initializer = requireNonNull(newArray.getInitializer());
+                            if (initializer.size() == 1 && (initializer.get(0) instanceof J.Annotation)) {
+                                cd = addSecurityRequirementAnnotation(cd, (Annotation) initializer.get(0));
+                            } else {
+                               cd = addSecurityRequirementsAnnotation(cd, initializer);
+                            }
+                        } else if (authAssignment instanceof J.Annotation){
+                            cd = addSecurityRequirementAnnotation(cd, (Annotation) authAssignment);
+                        }
+                    }
+
                     Expression descAssignment = annoArguments.get("description");
                     Expression tagsAssignment = annoArguments.get("tags");
 
@@ -154,6 +212,7 @@ public class MigrateApiToTag extends Recipe {
                     } else if (tagsAssignment != null) {
                         cd = addTagAnnotation(cd, tagsAssignment, descAssignment);
                     }
+
                     return maybeAutoFormat(classDecl, cd, cd.getName(), ctx, getCursor().getParentTreeCursor());
                 }
 
@@ -204,7 +263,102 @@ public class MigrateApiToTag extends Recipe {
                         .build()
                         .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
                 }
+
+                private J.ClassDeclaration addSecurityRequirementsAnnotation(J.ClassDeclaration cd, List<Expression> authsAssignment) {
+                    // Create template for @SecurityRequirements annotation
+                    StringBuilder template = new StringBuilder("@SecurityRequirements({");
+                    List<Expression> templateArgs = new ArrayList<>();
+
+                    for (Expression expression : authsAssignment) {
+                        if (!templateArgs.isEmpty()) {
+                            template.append(", ");
+                        }
+                        J.Annotation authAnnotation = (Annotation) expression;
+                        template.append("@SecurityRequirement(name = #{any()}");
+
+                        Map<String, J.Assignment> authAssignments = AnnotationUtils.extractArgumentAssignments(authAnnotation);
+                        Expression valueExpression = authAssignments.get("value").getAssignment();
+                        templateArgs.add(valueExpression);
+
+                        if (authAssignments.containsKey("scopes")) {
+                            Expression scopesExpression = authAssignments.get("scopes").getAssignment();
+                            processScopes(scopesExpression, template, templateArgs);
+                        }
+                        template.append(")");
+                    }
+                    template.append("})");
+
+                    // Add formatted template and imports
+                    maybeRemoveImport(FQN_AUTHORIZATION);
+                    maybeAddImport(FQN_SECURITY_REQS);
+                    maybeAddImport(FQN_SECURITY_REQ);
+                    return JavaTemplate.builder(template.toString())
+                            .imports(FQN_SECURITY_REQS, FQN_SECURITY_REQ)
+                            .javaParser(JavaParser.fromJavaVersion().dependsOn(SECURITY_REQS_CLASS, SECURITY_REQ_CLASS))
+                            .build()
+                            .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
+                }
+
+                private J.ClassDeclaration addSecurityRequirementAnnotation(J.ClassDeclaration cd, J.Annotation authAnnotation) {
+                    // Create template for @SecurityRequirement annotation
+                    Map<String, J.Assignment> authAssignments = AnnotationUtils.extractArgumentAssignments(authAnnotation);
+                    StringBuilder template = new StringBuilder("@SecurityRequirement(name = #{any()}");
+
+                    List<Expression> templateArgs = new ArrayList<>();
+
+                    templateArgs.add(authAssignments.get("value").getAssignment());
+
+                    if (authAssignments.containsKey("scopes")) {
+                        Expression scopesExpression = authAssignments.get("scopes").getAssignment();
+                        processScopes(scopesExpression, template, templateArgs);
+                    }
+                    template.append(")");
+
+                    // Add formatted template and imports
+                    maybeRemoveImport(FQN_AUTHORIZATION);
+                    maybeAddImport(FQN_SECURITY_REQ);
+                    return JavaTemplate.builder(template.toString())
+                            .imports(FQN_SECURITY_REQ)
+                            .javaParser(JavaParser.fromJavaVersion().dependsOn(SECURITY_REQS_CLASS, SECURITY_REQ_CLASS))
+                            .build()
+                            .apply(updateCursor(cd), cd.getCoordinates().addAnnotation(comparing(J.Annotation::getSimpleName)), templateArgs.toArray());
+                }
+
+                private void processScopes(Expression scopesExpression, StringBuilder template, List<Expression> templateArgs) {
+                    if (scopesExpression instanceof J.NewArray) {
+                        List<Expression> scopesArr = requireNonNull(((J.NewArray) scopesExpression).getInitializer());
+                        template.append(", scopes = {");
+                        StringBuilder scopesSb = new StringBuilder();
+                        for (Expression scopeExpression : scopesArr) {
+                            if (scopesSb.length() > 0) {
+                                scopesSb.append(", ");
+                            }
+                            scopesSb.append("#{any()}");
+                            Expression scope = extractScopeFromAnnotation((Annotation) scopeExpression);
+                            templateArgs.add(scope);
+                        }
+                        template.append(scopesSb);
+                        template.append("}");
+                    } else if (scopesExpression instanceof J.Annotation) {
+                        Expression scope = extractScopeFromAnnotation((Annotation) scopesExpression);
+                        if (scope != null) {
+                            template.append(", scopes = #{any()}");
+                            templateArgs.add(scope);
+                        }
+                    }
+                }
+
+                private Expression extractScopeFromAnnotation(J.Annotation scopeAnnotation) {
+                    maybeRemoveImport(FQN_AUTHORIZATION_SCOPE);
+                    Map<String, J.Assignment> scopeAssignments = AnnotationUtils.extractArgumentAssignments(scopeAnnotation);
+                    return scopeAssignments.get("scope").getAssignment();
+                }
             }
         );
+    }
+
+    @Override
+    public List<Recipe> getRecipeList() {
+        return singletonList(new ChangeType(FQN_API, FQN_TAG, true));
     }
 }
