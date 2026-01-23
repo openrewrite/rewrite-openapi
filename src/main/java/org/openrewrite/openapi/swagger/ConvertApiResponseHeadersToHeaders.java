@@ -15,8 +15,6 @@
  */
 package org.openrewrite.openapi.swagger;
 
-import static java.util.Objects.requireNonNull;
-
 import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
@@ -34,6 +32,8 @@ import org.openrewrite.java.tree.J.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Objects.requireNonNull;
 
 public class ConvertApiResponseHeadersToHeaders extends Recipe {
 
