@@ -194,7 +194,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
         //language=java
         rewriteRun(
           java(
-          """
+            """
               import io.swagger.annotations.ApiResponse;
               import io.swagger.annotations.ResponseHeader;
               import org.springframework.http.ResponseEntity;
@@ -203,8 +203,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
                   @ApiResponse(code = 200, message = "OK", response = User.class, responseHeaders = @ResponseHeader(name = "Bar", description = "the Bar header", response=java.lang.String.class ))
                   ResponseEntity<User> method() { return null; }
               }
-          """,
-        """
+              """,
+            """
               import io.swagger.v3.oas.annotations.headers.Header;
               import io.swagger.v3.oas.annotations.media.Content;
               import io.swagger.v3.oas.annotations.media.Schema;
@@ -215,7 +215,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
                   @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)), headers = @Header(name = "Bar", description = "the Bar header", schema = @Schema(implementation = java.lang.String.class)))
                   ResponseEntity<User> method() { return null; }
               }
-          """
+              """
           )
         );
     }
@@ -225,7 +225,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
         //language=java
         rewriteRun(
           java(
-          """
+            """
               import io.swagger.annotations.ApiResponse;
               import io.swagger.annotations.ResponseHeader;
               import org.springframework.http.ResponseEntity;
@@ -234,8 +234,8 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
                   @ApiResponse(code = 200, message = "OK", response = User.class, responseHeaders = {@ResponseHeader(name = "Bar", description = "the Bar header", response=java.lang.String.class ), @ResponseHeader(name = "Foo", response=java.lang.String.class )})
                   ResponseEntity<User> method() { return null; }
               }
-          """,
-        """
+              """,
+            """
               import io.swagger.v3.oas.annotations.headers.Header;
               import io.swagger.v3.oas.annotations.media.Content;
               import io.swagger.v3.oas.annotations.media.Schema;
@@ -246,7 +246,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
                   @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)), headers = {@Header(name = "Bar", description = "the Bar header", schema = @Schema(implementation = java.lang.String.class)), @Header(name = "Foo", schema = @Schema(implementation = java.lang.String.class))})
                   ResponseEntity<User> method() { return null; }
               }
-          """
+              """
           )
         );
     }
