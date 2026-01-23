@@ -88,7 +88,7 @@ public class MigrateApiImplicitParam extends Recipe {
                   }
                   anno = JavaTemplate.builder(tpl.toString())
                     .imports(FQN_SCHEMA)
-                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
+                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations-2"))
                     .build()
                     .apply(updateCursor(anno), annotation.getCoordinates().replaceArguments(), args.toArray());
                   maybeAddImport(FQN_SCHEMA, false);

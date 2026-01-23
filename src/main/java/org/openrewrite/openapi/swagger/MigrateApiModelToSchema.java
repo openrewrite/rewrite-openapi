@@ -152,7 +152,7 @@ public class MigrateApiModelToSchema extends Recipe {
                         if (assign.getVariable() instanceof J.Identifier &&
                                 "reference".equals(((J.Identifier) assign.getVariable()).getSimpleName())) {
                             return JavaTemplate.builder("implementation = " + referenceValue + ".class")
-                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
+                                    .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations-2"))
                                     .build()
                                     .apply(new Cursor(getCursor(), arg), arg.getCoordinates().replace());
                         }

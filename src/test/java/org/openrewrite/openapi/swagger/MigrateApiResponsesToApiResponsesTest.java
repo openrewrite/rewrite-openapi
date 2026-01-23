@@ -163,7 +163,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void noChangeOnAlreadyConverted() {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations")
+            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-2")
             .dependsOn(
               """
                 package org.springframework.http;
@@ -182,6 +182,68 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
 
               class A {
                   @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
+                  ResponseEntity<User> method() { return null; }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void convertApiResponseHeadersToHeaders() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import io.swagger.annotations.ApiResponse;
+              import io.swagger.annotations.ResponseHeader;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(code = 200, message = "OK", response = User.class, responseHeaders = @ResponseHeader(name = "Bar", description = "the Bar header", response=java.lang.String.class ))
+                  ResponseEntity<User> method() { return null; }
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.headers.Header;
+              import io.swagger.v3.oas.annotations.media.Content;
+              import io.swagger.v3.oas.annotations.media.Schema;
+              import io.swagger.v3.oas.annotations.responses.ApiResponse;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)), headers = @Header(name = "Bar", description = "the Bar header", schema = @Schema(implementation = java.lang.String.class)))
+                  ResponseEntity<User> method() { return null; }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void convertApiResponseMultipleHeadersToHeaders() {
+        //language=java
+        rewriteRun(
+          java(
+            """
+              import io.swagger.annotations.ApiResponse;
+              import io.swagger.annotations.ResponseHeader;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(code = 200, message = "OK", response = User.class, responseHeaders = {@ResponseHeader(name = "Bar", description = "the Bar header", response=java.lang.String.class ), @ResponseHeader(name = "Foo", response=java.lang.String.class )})
+                  ResponseEntity<User> method() { return null; }
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.headers.Header;
+              import io.swagger.v3.oas.annotations.media.Content;
+              import io.swagger.v3.oas.annotations.media.Schema;
+              import io.swagger.v3.oas.annotations.responses.ApiResponse;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)), headers = {@Header(name = "Bar", description = "the Bar header", schema = @Schema(implementation = java.lang.String.class)), @Header(name = "Foo", schema = @Schema(implementation = java.lang.String.class))})
                   ResponseEntity<User> method() { return null; }
               }
               """

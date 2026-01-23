@@ -175,6 +175,7 @@ recipeList:
       newAttributeName: "description"
   - org.openrewrite.openapi.swagger.ConvertApiResponseCodesToStrings
   - org.openrewrite.openapi.swagger.ConvertApiResponseToContent
+  - org.openrewrite.openapi.swagger.ConvertApiResponseHeadersToHeaders
 
 ---
 type: specs.openrewrite.org/v1beta/recipe
