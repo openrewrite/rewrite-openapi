@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Objects.requireNonNull;
-
 public class ConvertApiResponseHeadersToHeaders extends Recipe {
 
     private static final AnnotationMatcher ANNOTATION_MATCHER = new AnnotationMatcher("@io.swagger.v3.oas.annotations.responses.ApiResponse");
@@ -56,45 +54,43 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                     @Override
                     public J.Annotation visitAnnotation(J.Annotation annotation, ExecutionContext ctx) {
                         J.Annotation an = super.visitAnnotation(annotation, ctx);
-                        if (!ANNOTATION_MATCHER.matches(an) || an.getArguments() == null) {
-                            return an;
-                        }
-                        if (!containsHeaders(an)) {
+                        if (!ANNOTATION_MATCHER.matches(an) || an.getArguments() == null || !containsHeaders(an)) {
                             return an;
                         }
 
                         StringBuilder result = new StringBuilder();
                         List<Expression> args = new ArrayList<>();
 
-                        Expression respHeadersExpresion = preprocessForHeader(an.getArguments(), result, args);
+                        Expression respHeadersExpression = preprocessForHeader(an.getArguments(), result, args);
 
                         result.append("headers = ");
-                        if (respHeadersExpresion instanceof J.Annotation) {
-                            result.append(generateHeaderEntry((Annotation) respHeadersExpresion, args));
-                        } else {
-                            List<Expression> headersArray = requireNonNull(((J.NewArray) respHeadersExpresion).getInitializer());
+                        if (respHeadersExpression instanceof J.Annotation) {
+                            result.append(generateHeaderEntry((Annotation) respHeadersExpression, args));
+                        } else if (respHeadersExpression instanceof J.NewArray) {
+                            List<Expression> headersArray = ((J.NewArray) respHeadersExpression).getInitializer();
                             result.append("{");
                             for (int i = 0; i < headersArray.size(); i++) {
                                 Expression headerArrEntry = headersArray.get(i);
                                 if (headerArrEntry instanceof J.Annotation) {
-                                    if (i > 0) {
+                                    if (0 < i) {
                                         result.append(", ");
                                     }
                                     result.append(generateHeaderEntry((Annotation) headerArrEntry, args));
                                 }
-
                             }
                             result.append("}");
+                        } else {
+                            return an; // should not happen
                         }
 
+                        maybeRemoveImport(FQN_REPONSEHEADER);
+                        maybeAddImport(FQN_HEADER);
+                        maybeAddImport(FQN_SCHEMA);
                         an = JavaTemplate.builder(result.toString())
                                 .imports(FQN_HEADER)
                                 .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
                                 .build()
                                 .apply(getCursor(), an.getCoordinates().replaceArguments(), args.toArray());
-                        maybeRemoveImport(FQN_REPONSEHEADER);
-                        maybeAddImport(FQN_HEADER);
-                        maybeAddImport(FQN_SCHEMA);
 
                         return maybeAutoFormat(annotation, an, ctx, getCursor().getParentTreeCursor());
                     }
@@ -107,7 +103,6 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                      * @return  whether <code>responseHeaders</code> is an expression contained in the <code>ApiResponse</code> annotation
                      */
                     private boolean containsHeaders(J.Annotation annotation) {
-
                         if (annotation.getArguments() == null ||
                                 annotation.getArguments().isEmpty() ||
                                 annotation.getArguments().get(0) instanceof J.Empty) {
@@ -137,16 +132,13 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                      */
                     private Expression preprocessForHeader(List<Expression> annotationArgs, StringBuilder result, List<Expression> args) {
                         Expression headersExpression = null;
-
                         for (Expression arg : annotationArgs) {
-
                             if (arg instanceof J.Assignment && (((J.Assignment) arg).getVariable() instanceof J.Identifier)) {
-
                                 J.Assignment assign = (J.Assignment) arg;
                                 String name = ((J.Identifier) assign.getVariable()).getSimpleName();
                                 Expression assignment = assign.getAssignment();
 
-                                if ("responseHeaders".equals(name) && (assignment instanceof J.Annotation) || (assignment instanceof J.NewArray)) {
+                                if ("responseHeaders".equals(name) && (assignment instanceof Annotation || assignment instanceof J.NewArray)) {
                                     headersExpression = assignment;
                                 } else {
                                     result.append("#{any()}, ");
@@ -159,7 +151,6 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                             }
 
                         }
-
                         return headersExpression;
                     }
 
@@ -173,13 +164,11 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                      */
                     private String generateHeaderEntry(J.Annotation responseHeader, List<Expression> args) {
                         Map<String, Expression> headersAnnontationExpr = AnnotationUtils.extractArgumentAssignedExpressions(responseHeader);
-                        final String[] stdExpressions = {"name", "description"}; // these are transformed the same way
 
-                        StringBuilder sb = new StringBuilder("@Header(");
-
-                        for (String stdExpression : stdExpressions) {
+                        StringBuilder sb = new StringBuilder();
+                        for (String stdExpression : new String[]{"name", "description"}) {
                             if (headersAnnontationExpr.containsKey(stdExpression)) {
-                                if (sb.length() > 8) {
+                                if (0 < sb.length()) {
                                     sb.append(", ");
                                 }
                                 sb.append(stdExpression);
@@ -190,7 +179,7 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
 
                         // response needs to be embedded in a Schema
                         if (headersAnnontationExpr.containsKey("response")) {
-                            if (sb.length() > 0) {
+                            if (0 < sb.length()) {
                                 sb.append(", ");
                             }
                             sb.append("schema = @Schema(implementation = #{any()})");
@@ -198,10 +187,8 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                             maybeAddImport(FQN_SCHEMA);
                         }
 
-                        sb.append(")");
-
-                        return sb.toString();
-
+                        // Wrap with @Header(...) and return
+                        return sb.insert(0, "@Header(").append(")").toString();
                     }
                 }
         );

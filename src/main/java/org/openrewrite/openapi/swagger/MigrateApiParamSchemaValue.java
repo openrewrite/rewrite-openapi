@@ -76,7 +76,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
         maybeAddImport(FQN_SCHEMA, false);
         a = JavaTemplate.builder(tpl.toString())
                 .imports(FQN_SCHEMA)
-                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
+                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations-2"))
                 .build()
                 .apply(updateCursor(a), annotation.getCoordinates().replaceArguments(), args.toArray());
         return maybeAutoFormat(annotation, a, ctx, getCursor().getParentTreeCursor());

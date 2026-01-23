@@ -163,7 +163,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     void noChangeOnAlreadyConverted() {
         rewriteRun(
           spec -> spec.parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations")
+            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-2")
             .dependsOn(
               """
                 package org.springframework.http;

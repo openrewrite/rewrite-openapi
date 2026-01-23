@@ -103,7 +103,7 @@ public class ConvertApiResponseToContent extends Recipe {
                         String arguments = StringUtils.repeat("#{any()}, ", maybeArgsWithoutResponse.size());
                         an = JavaTemplate.builder(arguments + "content = @Content(mediaType = \"application/json\", " + inner)
                                 .imports("io.swagger.v3.oas.annotations.media.*")
-                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
+                                .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations-2"))
                                 .build()
                                 .apply(
                                         getCursor(),
