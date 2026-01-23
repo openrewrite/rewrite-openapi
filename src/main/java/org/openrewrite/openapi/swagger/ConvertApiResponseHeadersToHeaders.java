@@ -17,10 +17,7 @@ package org.openrewrite.openapi.swagger;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import lombok.Getter;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.Recipe;
@@ -34,20 +31,22 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.J.Annotation;
 
-import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class ConvertApiResponseHeadersToHeaders extends Recipe {
 
     private static final AnnotationMatcher ANNOTATION_MATCHER = new AnnotationMatcher("@io.swagger.v3.oas.annotations.responses.ApiResponse");
     private static final String FQN_HEADER = "io.swagger.v3.oas.annotations.headers.Header";
-    private static final String FQN_REPONSEHEADER = "io.swagger.annotations.ResponseHeader";
     private static final String FQN_SCHEMA = "io.swagger.v3.oas.annotations.media.Schema";
+    private static final String FQN_REPONSEHEADER = "io.swagger.annotations.ResponseHeader";
 
     @Getter
     final String displayName = "Convert API responseHeaders to headers";
 
     @Getter
-    final String description = "Add `content = @Content(mediaType = ...)` and `schema` to `@ApiResponse`.";
+    final String description = "Add `headers = @Header(name = ...)` to `@ApiResponse`.";
 
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
