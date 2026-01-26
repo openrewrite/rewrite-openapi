@@ -94,7 +94,7 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
         //language=java
         rewriteRun(
           // Input has int constant where String is expected - this is the broken state we're fixing
-          spec -> spec.typeValidationOptions(TypeValidation.none()),
+          spec -> spec.typeValidationOptions(TypeValidation.all().identifiers(false)),
           java(
             """
               import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -127,8 +127,6 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
     void convertExternalConstantFieldAccess() {
         //language=java
         rewriteRun(
-          // Input has int constant where String is expected - this is the broken state we're fixing
-          spec -> spec.typeValidationOptions(TypeValidation.none()),
           java(
             """
               package com.example;
@@ -168,8 +166,6 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
     void convertNestedClassConstantFieldAccess() {
         //language=java
         rewriteRun(
-          // Input has int constant where String is expected - this is the broken state we're fixing
-          spec -> spec.typeValidationOptions(TypeValidation.none()),
           java(
             """
               package com.example;
