@@ -13,6 +13,29 @@
 # limitations under the License.
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.openapi.swagger.ConvertApiResponseCodesToStrings
+examples:
+- description: '`ConvertApiResponseCodesToStringsTest#convertIntLiteralToString`'
+  sources:
+  - before: |
+      import io.swagger.v3.oas.annotations.responses.ApiResponse;
+      import org.springframework.http.ResponseEntity;
+
+      class A {
+          @ApiResponse(responseCode = 200, description = "OK")
+          ResponseEntity<User> method() { return null; }
+      }
+    after: |
+      import io.swagger.v3.oas.annotations.responses.ApiResponse;
+      import org.springframework.http.ResponseEntity;
+
+      class A {
+          @ApiResponse(responseCode = "200", description = "OK")
+          ResponseEntity<User> method() { return null; }
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.MigrateApiModelToSchema
 examples:
 - description: '`MigrateApiModelToSchemaTest#shouldChangeApiModelWithSchema`'
