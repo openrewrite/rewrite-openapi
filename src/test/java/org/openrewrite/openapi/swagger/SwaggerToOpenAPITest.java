@@ -500,4 +500,30 @@ class SwaggerToOpenAPITest implements RewriteTest {
           )
         );
     }
+
+    @Test
+    void shouldRemoveAllLegacySwaggerImports() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.Api;
+              import io.swagger.annotations.ApiOperation;
+              import io.swagger.annotations.ApiResponse;
+              import io.swagger.annotations.ApiResponses;
+
+              @Api(value = "Example API")
+              class Example {
+                @ApiOperation(value = "Get", notes = "Gets something")
+                @ApiResponses(@ApiResponse(code = 200, message = "OK"))
+                public void get() {}
+              }
+              """,
+            spec -> spec.after(actual -> {
+                assertThat(actual).doesNotContain("io.swagger.annotations");
+                return actual;
+            })
+          )
+        );
+    }
 }
