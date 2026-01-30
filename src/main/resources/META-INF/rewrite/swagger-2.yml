@@ -17,7 +17,8 @@
 type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.SwaggerToOpenAPI
 displayName: Migrate from Swagger to OpenAPI
-description: Migrate from Swagger to OpenAPI.
+description: Migrate from Swagger to OpenAPI.preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
@@ -64,6 +65,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.UseJakartaSwaggerArtifacts
 displayName: Use Jakarta Swagger Artifacts
 description: Migrate from javax Swagger artifacts to Jakarta versions.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
@@ -116,6 +119,8 @@ name: org.openrewrite.openapi.swagger.MigrateApiOperationToOperation
 displayName: Migrate from `@ApiOperation` to `@Operation`
 description: Converts the `@ApiOperation` annotation to `@Operation` and converts the directly mappable attributes
   and removes the others.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
@@ -155,6 +160,8 @@ name: org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses
 displayName: Migrate from `@ApiResponses` to `@ApiResponses`
 description: Changes the namespace of the `@ApiResponses` and `@ApiResponse` annotations and converts its attributes
   (ex. code -> responseCode, message -> description, response -> content).
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
@@ -183,6 +190,8 @@ name: org.openrewrite.openapi.swagger.MigrateApiImplicitParamsToParameters
 displayName: Migrate from `@ApiImplicitParams`  to `@Parameters`
 description: Converts `@ApiImplicitParams` to `@Parameters` and the `@ApiImplicitParam` annotation to `@Parameter` and converts
   the directly mappable attributes and removes the others.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
@@ -213,6 +222,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiParamToParameter
 displayName: Migrate from `@ApiParam` to `@Parameter`
 description: Converts the `@ApiParam` annotation to `@Parameter` and converts the directly mappable attributes.
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
@@ -235,6 +246,8 @@ type: specs.openrewrite.org/v1beta/recipe
 name: org.openrewrite.openapi.swagger.MigrateApiModelPropertyToSchema
 displayName: Migrate from `@ApiModelProperty` to `@Schema`
 description: Converts the `@ApiModelProperty` annotation to `@Schema` and converts the "value" attribute to "description".
+preconditions:
+  - org.openrewrite.Singleton
 tags:
   - swagger
   - openapi
