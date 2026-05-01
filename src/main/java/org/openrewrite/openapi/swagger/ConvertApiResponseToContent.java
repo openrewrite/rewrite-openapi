@@ -85,6 +85,21 @@ public class ConvertApiResponseToContent extends Recipe {
                         if (maybeArgsWithoutResponse.size() >= an.getArguments().size()) {
                             return an;
                         }
+                        if (contentClass.get() == null) {
+                            // `responseContainer` without `response` cannot form a content schema; drop it.
+                            String args = StringUtils.repeat("#{any()}, ", maybeArgsWithoutResponse.size());
+                            if (args.endsWith(", ")) {
+                                args = args.substring(0, args.length() - 2);
+                            }
+                            an = JavaTemplate.builder(args)
+                                    .build()
+                                    .apply(
+                                            getCursor(),
+                                            an.getCoordinates().replaceArguments(),
+                                            maybeArgsWithoutResponse.toArray()
+                                    );
+                            return maybeAutoFormat(annotation, an, ctx, getCursor().getParentTreeCursor());
+                        }
                         String inner;
                         String type = containerType.get() != null ? containerType.get().toString() : null;
                         // 1) list/set case: wrap in ArraySchema
