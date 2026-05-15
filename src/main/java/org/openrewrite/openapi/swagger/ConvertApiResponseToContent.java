@@ -91,13 +91,7 @@ public class ConvertApiResponseToContent extends Recipe {
                             if (args.endsWith(", ")) {
                                 args = args.substring(0, args.length() - 2);
                             }
-                            an = JavaTemplate.builder(args)
-                                    .build()
-                                    .apply(
-                                            getCursor(),
-                                            an.getCoordinates().replaceArguments(),
-                                            maybeArgsWithoutResponse.toArray()
-                                    );
+                            an = JavaTemplate.apply(args, getCursor(), an.getCoordinates().replaceArguments(), maybeArgsWithoutResponse.toArray());
                             return maybeAutoFormat(annotation, an, ctx, getCursor().getParentTreeCursor());
                         }
                         String inner;
