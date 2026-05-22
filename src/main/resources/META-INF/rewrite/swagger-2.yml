@@ -45,6 +45,7 @@ recipeList:
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: io.swagger.annotations.Info
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.info.Info
+  - org.openrewrite.openapi.swagger.MigrateApiIgnoreParameterToParameterHidden
   - org.openrewrite.java.ChangeType:
       oldFullyQualifiedTypeName: springfox.documentation.annotations.ApiIgnore
       newFullyQualifiedTypeName: io.swagger.v3.oas.annotations.Hidden
