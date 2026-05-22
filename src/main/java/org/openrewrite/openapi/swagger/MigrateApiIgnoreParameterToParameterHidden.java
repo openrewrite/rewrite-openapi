@@ -37,7 +37,7 @@ public class MigrateApiIgnoreParameterToParameterHidden extends Recipe {
     final String displayName = "Replace springfox `@ApiIgnore` on method parameters with `@Parameter(hidden = true)`";
 
     @Getter
-    final String description = "springfox's `@ApiIgnore` is commonly placed on framework-injected controller parameters " +
+    final String description = "Springfox's `@ApiIgnore` is commonly placed on framework-injected controller parameters " +
             "(`Principal`, `HttpServletRequest`, `Pageable`, ...). A flat `ChangeType` to `io.swagger.v3.oas.annotations.Hidden` " +
             "produces code that does not compile, because `@Hidden` cannot target parameters. Convert parameter usages directly " +
             "to `@io.swagger.v3.oas.annotations.Parameter(hidden = true)` and leave method/class-level `@ApiIgnore` for the " +
