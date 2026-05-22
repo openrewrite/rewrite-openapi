@@ -16,8 +16,6 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-gradle")
     testImplementation("org.openrewrite:rewrite-maven")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.14.2")
-
     testRuntimeOnly("io.swagger:swagger-annotations:1.6.13")
     testRuntimeOnly("io.swagger.core.v3:swagger-annotations:2.2.20")
     testRuntimeOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
