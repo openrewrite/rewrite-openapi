@@ -36,6 +36,31 @@ examples:
     language: java
 ---
 type: specs.openrewrite.org/v1beta/example
+recipeName: org.openrewrite.openapi.swagger.MigrateApiIgnoreParameterToParameterHidden
+examples:
+- description: '`MigrateApiIgnoreParameterToParameterHiddenTest#replacesApiIgnoreOnParameter`'
+  sources:
+  - before: |
+      import springfox.documentation.annotations.ApiIgnore;
+
+      import java.security.Principal;
+
+      class Example {
+          void handler(@ApiIgnore Principal principal) {
+          }
+      }
+    after: |
+      import io.swagger.v3.oas.annotations.Parameter;
+
+      import java.security.Principal;
+
+      class Example {
+          void handler(@Parameter(hidden = true) Principal principal) {
+          }
+      }
+    language: java
+---
+type: specs.openrewrite.org/v1beta/example
 recipeName: org.openrewrite.openapi.swagger.MigrateApiModelToSchema
 examples:
 - description: '`MigrateApiModelToSchemaTest#shouldChangeApiModelWithSchema`'
@@ -100,31 +125,6 @@ examples:
 
       @Tag(name = "Bar")
       class Example {}
-    language: java
----
-type: specs.openrewrite.org/v1beta/example
-recipeName: org.openrewrite.openapi.swagger.MigrateApiIgnoreParameterToParameterHidden
-examples:
-- description: '`MigrateApiIgnoreParameterToParameterHiddenTest#replacesApiIgnoreOnParameter`'
-  sources:
-  - before: |
-      import springfox.documentation.annotations.ApiIgnore;
-
-      import java.security.Principal;
-
-      class Example {
-          void handler(@ApiIgnore Principal principal) {
-          }
-      }
-    after: |
-      import io.swagger.v3.oas.annotations.Parameter;
-
-      import java.security.Principal;
-
-      class Example {
-          void handler(@Parameter(hidden = true) Principal principal) {
-          }
-      }
     language: java
 ---
 type: specs.openrewrite.org/v1beta/example
