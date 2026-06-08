@@ -44,7 +44,7 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
     @Override
     public Annotation visitAnnotation(Annotation annotation, ExecutionContext ctx) {
         J.Annotation a = super.visitAnnotation(annotation, ctx);
-        if (!PARAMETER_ANNOTATION_MATCHER.matches(a)) {
+        if (!PARAMETER_ANNOTATION_MATCHER.matches(a) || a.getArguments() == null) {
             return a;
         }
 
