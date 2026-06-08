@@ -198,6 +198,56 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
+    @Test
+    void migrateApiParamWithoutArguments() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                @ApiParam
+                private Integer foo;
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+
+              class Example {
+                @Parameter
+                private Integer foo;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateApiParamWithoutArgumentsOnMethodParameter() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                void create(@ApiParam Integer foo) {
+                }
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+
+              class Example {
+                void create(@Parameter Integer foo) {
+                }
+              }
+              """
+          )
+        );
+    }
+
     /**
      *
      * Same test as {@link #migrateApiParam()} making sure the order of the annotation properties doesn't break the logic
