@@ -48,3 +48,5 @@ gradle-app.setting
 out/
 
 .claude/settings.local.json 
+
+.context/
