@@ -198,11 +198,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
         );
     }
 
-    /**
-     *
-     * Same test as {@link #migrateApiParam()} making sure the order of the annotation properties doesn't break the logic
-     *
-     */
+    /// Same test as [#migrateApiParam()] making sure the order of the annotation properties doesn't break the logic
     @Test
     void migrateApiParamDiffOrder() {
         rewriteRun(
