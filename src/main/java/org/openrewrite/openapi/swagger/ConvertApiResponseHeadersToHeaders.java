@@ -87,7 +87,7 @@ public class ConvertApiResponseHeadersToHeaders extends Recipe {
                         maybeAddImport(FQN_HEADER);
                         maybeAddImport(FQN_SCHEMA);
                         an = JavaTemplate.builder(result.toString())
-                                .imports(FQN_HEADER)
+                                .imports(FQN_HEADER, FQN_SCHEMA)
                                 .javaParser(JavaParser.fromJavaVersion().classpathFromResources(ctx, "swagger-annotations"))
                                 .build()
                                 .apply(getCursor(), an.getCoordinates().replaceArguments(), args.toArray());
