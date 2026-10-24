@@ -148,7 +148,45 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
               }
               """,
             """
-              import com.example.StatusCodes;
+              import io.swagger.v3.oas.annotations.responses.ApiResponse;
+              import org.springframework.http.ResponseEntity;
+
+              class A {
+                  @ApiResponse(responseCode = "404", description = "Not found")
+                  ResponseEntity<User> method() { return null; }
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void convertStaticallyImportedConstant() {
+        //language=java
+        rewriteRun(
+          spec -> spec.typeValidationOptions(TypeValidation.all().identifiers(false)),
+          java(
+            """
+              package com.example;
+
+              public class StatusCodes {
+                  public static final int NOT_FOUND = 404;
+              }
+              """
+          ),
+          java(
+            """
+              import io.swagger.v3.oas.annotations.responses.ApiResponse;
+              import org.springframework.http.ResponseEntity;
+
+              import static com.example.StatusCodes.NOT_FOUND;
+
+              class A {
+                  @ApiResponse(responseCode = NOT_FOUND, description = "Not found")
+                  ResponseEntity<User> method() { return null; }
+              }
+              """,
+            """
               import io.swagger.v3.oas.annotations.responses.ApiResponse;
               import org.springframework.http.ResponseEntity;
 
@@ -190,7 +228,6 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
               }
               """,
             """
-              import com.example.Dialog;
               import io.swagger.v3.oas.annotations.responses.ApiResponse;
               import org.springframework.http.ResponseEntity;
 

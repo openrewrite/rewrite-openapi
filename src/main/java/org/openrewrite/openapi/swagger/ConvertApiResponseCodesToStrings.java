@@ -30,6 +30,7 @@ import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
+import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -111,11 +112,12 @@ public class ConvertApiResponseCodesToStrings extends ScanningRecipe<ConvertApiR
                                     }
                                 }
 
-                                // Case 2: Identifier (e.g., responseCode = OK_CODE, referencing local constant)
+                                // Case 2: Identifier (e.g., responseCode = OK_CODE, referencing a local or statically imported constant)
                                 if (assignedValue instanceof J.Identifier) {
-                                    J.Identifier ident = (J.Identifier) assignedValue;
-                                    String resolvedValue = resolveConstantValue(ident, acc);
+                                    String constant = constantName((J.Identifier) assignedValue);
+                                    String resolvedValue = acc.getConstant(constant);
                                     if (resolvedValue != null) {
+                                        maybeRemoveImport(constant);
                                         return convertToStringLiteral(assignment, resolvedValue);
                                     }
                                 }
@@ -123,8 +125,9 @@ public class ConvertApiResponseCodesToStrings extends ScanningRecipe<ConvertApiR
                                 // Case 3: Field access (e.g., responseCode = StatusCodes.NOT_FOUND)
                                 if (assignedValue instanceof J.FieldAccess) {
                                     J.FieldAccess fieldAccess = (J.FieldAccess) assignedValue;
-                                    String resolvedValue = resolveFieldAccessValue(fieldAccess, acc);
+                                    String resolvedValue = acc.getConstant(constantName(fieldAccess.getName()));
                                     if (resolvedValue != null) {
+                                        maybeRemoveImport(TypeUtils.asFullyQualified(leftmostName(fieldAccess).getType()));
                                         return convertToStringLiteral(assignment, resolvedValue);
                                     }
                                 }
@@ -148,22 +151,21 @@ public class ConvertApiResponseCodesToStrings extends ScanningRecipe<ConvertApiR
                                 .withAssignment(stringLiteral);
                     }
 
-                    private @Nullable String resolveConstantValue(J.Identifier ident, ConstantAccumulator acc) {
+                    private @Nullable String constantName(J.Identifier ident) {
                         JavaType.Variable fieldType = ident.getFieldType();
                         if (fieldType != null && fieldType.getOwner() instanceof JavaType.FullyQualified) {
-                            String key = ((JavaType.FullyQualified) fieldType.getOwner()).getFullyQualifiedName() + "." + ident.getSimpleName();
-                            return acc.getConstant(key);
+                            return ((JavaType.FullyQualified) fieldType.getOwner()).getFullyQualifiedName() + "." + ident.getSimpleName();
                         }
                         return null;
                     }
 
-                    private @Nullable String resolveFieldAccessValue(J.FieldAccess fieldAccess, ConstantAccumulator acc) {
-                        JavaType.Variable fieldType = fieldAccess.getName().getFieldType();
-                        if (fieldType != null && fieldType.getOwner() instanceof JavaType.FullyQualified) {
-                            String key = ((JavaType.FullyQualified) fieldType.getOwner()).getFullyQualifiedName() + "." + fieldAccess.getSimpleName();
-                            return acc.getConstant(key);
+                    // The import a field access relies on is the one for its leftmost name, `Dialog` in `Dialog.PredefinedButton.YES`
+                    private Expression leftmostName(J.FieldAccess fieldAccess) {
+                        Expression target = fieldAccess.getTarget();
+                        while (target instanceof J.FieldAccess) {
+                            target = ((J.FieldAccess) target).getTarget();
                         }
-                        return null;
+                        return target;
                     }
                 }
         );
@@ -177,7 +179,7 @@ public class ConvertApiResponseCodesToStrings extends ScanningRecipe<ConvertApiR
             constants.put(key, value);
         }
 
-        public @Nullable String getConstant(String key) {
+        public @Nullable String getConstant(@Nullable String key) {
             return constants.get(key);
         }
     }
