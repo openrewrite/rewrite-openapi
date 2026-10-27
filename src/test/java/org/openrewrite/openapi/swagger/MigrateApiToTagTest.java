@@ -17,6 +17,7 @@ package org.openrewrite.openapi.swagger;
 
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -28,7 +29,7 @@ class MigrateApiToTagTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateApiToTag())
-          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+"));
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1"));
     }
 
     @DocumentExample

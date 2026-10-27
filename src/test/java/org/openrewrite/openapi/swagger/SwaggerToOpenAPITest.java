@@ -18,10 +18,14 @@ package org.openrewrite.openapi.swagger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DocumentExample;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,8 +35,10 @@ import static org.openrewrite.maven.Assertions.pomXml;
 class SwaggerToOpenAPITest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
+        List<Path> classpath = new ArrayList<>(JavaParser.dependenciesFromResources(new InMemoryExecutionContext(), "swagger-annotations-1"));
+        classpath.addAll(JavaParser.dependenciesFromClasspath("rs-api"));
         spec.recipeFromResources("org.openrewrite.openapi.swagger.SwaggerToOpenAPI")
-          .parser(JavaParser.fromJavaVersion().classpath("swagger-annotations-1.+", "rs-api"));
+          .parser(JavaParser.fromJavaVersion().classpath(classpath));
     }
 
     @DocumentExample
