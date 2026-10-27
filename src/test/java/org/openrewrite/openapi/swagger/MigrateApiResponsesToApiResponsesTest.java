@@ -29,7 +29,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses")
           .parser(JavaParser.fromJavaVersion()
-            .classpath("swagger-annotations-1.+")
+            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1")
             .dependsOn(
               """
                 package org.springframework.http;
