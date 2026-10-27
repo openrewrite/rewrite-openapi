@@ -36,7 +36,7 @@ public class MigrateApiParamAllowableValues extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-                new UsesMethod<>("io.swagger.annotations.ApiParam allowableValues()", false),
+                new UsesMethod<>("io.swagger.v3.oas.annotations.Parameter allowableValues()", false),
                 new MigrateApiParamSchemaValue(VBLE_NAME));
     }
 }
