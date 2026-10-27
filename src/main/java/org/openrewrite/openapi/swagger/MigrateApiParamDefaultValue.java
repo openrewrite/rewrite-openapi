@@ -35,7 +35,7 @@ public class MigrateApiParamDefaultValue extends Recipe {
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         // This recipe is after ChangeType recipe
         return Preconditions.check(
-                new UsesMethod<>("io.swagger.annotations.ApiParam defaultValue()", false),
+                new UsesMethod<>("io.swagger.v3.oas.annotations.Parameter defaultValue()", false),
                 new MigrateApiParamSchemaValue(VBLE_NAME));
     }
 }
