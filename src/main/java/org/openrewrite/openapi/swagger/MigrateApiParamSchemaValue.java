@@ -153,13 +153,14 @@ class MigrateApiParamSchemaValue extends JavaIsoVisitor<ExecutionContext> {
                 }
             } else {
                 tpl.append(schemaStr);
+                args.add(schemaExpr);
                 if (existingSchemaExpr != null && existingSchemaExpr.getAssignment() instanceof Annotation) {
                     for (Expression schemaArg : ((Annotation) existingSchemaExpr.getAssignment()).getArguments()) {
-                        tpl.append(", ").append(schemaArg);
+                        tpl.append(", #{any()}");
+                        args.add(schemaArg);
                     }
                 }
                 tpl.append(")");
-                args.add(schemaExpr);
             }
         }
     }
