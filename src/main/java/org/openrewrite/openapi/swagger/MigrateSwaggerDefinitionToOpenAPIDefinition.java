@@ -27,6 +27,7 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -67,14 +68,14 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                             if (basePath != null && host != null && schemes != null) {
                                 tpl.append("servers = {\n");
                                 if (schemes instanceof J.FieldAccess) {
-                                    servers += "@Server(url = \"" + ((J.FieldAccess) schemes).getSimpleName().toLowerCase() + "://" + host + basePath + "\")";
+                                    servers += server(((J.FieldAccess) schemes).getSimpleName().toLowerCase(), host, basePath, tplArgs);
                                 } else if (schemes instanceof J.NewArray) {
                                     for (Expression scheme : ((J.NewArray) schemes).getInitializer()) {
                                         if (!servers.isEmpty()) {
                                             servers += ",\n";
                                         }
                                         String schemeName = ((J.FieldAccess) scheme).getSimpleName().toLowerCase();
-                                        servers += "@Server(url = \"" + schemeName + "://" + host + basePath + "\")";
+                                        servers += server(schemeName, host, basePath, tplArgs);
                                     }
                                 }
                                 servers += "\n}";
@@ -109,5 +110,37 @@ public class MigrateSwaggerDefinitionToOpenAPIDefinition extends Recipe {
                     }
                 }
         );
+    }
+
+    private static String server(String scheme, Expression host, Expression basePath, List<Expression> tplArgs) {
+        StringBuilder url = new StringBuilder("\"").append(scheme).append("://");
+        boolean inString = true;
+        for (Expression part : Arrays.asList(host, basePath)) {
+            String literal = stringLiteralContent(part);
+            if (literal != null) {
+                url.append(inString ? "" : " + \"").append(literal);
+                inString = true;
+            } else {
+                url.append(inString ? "\" + " : " + ").append("#{any(java.lang.String)}");
+                tplArgs.add(part);
+                inString = false;
+            }
+        }
+        if (inString) {
+            url.append('"');
+        }
+        return "@Server(url = " + url + ")";
+    }
+
+    private static @Nullable String stringLiteralContent(Expression expression) {
+        if (expression instanceof J.Literal) {
+            J.Literal literal = (J.Literal) expression;
+            String source = literal.getValueSource();
+            if (literal.getValue() instanceof String && source != null &&
+                    source.startsWith("\"") && !source.startsWith("\"\"\"") && !source.contains("#{")) {
+                return source.substring(1, source.length() - 1);
+            }
+        }
+        return null;
     }
 }

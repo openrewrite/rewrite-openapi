@@ -329,6 +329,168 @@ class SwaggerToOpenAPITest implements RewriteTest {
     }
 
     @Test
+    void migrateApiParamMultiSchemaWithTemplateLikeValue() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                @ApiParam(name = "foo", value = "Foo Object", allowableValues = "#{foo}, #{bar}", required = false, defaultValue = "#{bar}")
+                private String foo;
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo Object", required = false, schema = @Schema(allowableValues = "#{foo}, #{bar}", defaultValue = "#{bar}"))
+                private String foo;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateApiParamMultiSchemaWithConstants() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              package com.example;
+
+              public class Constants {
+                  public static final String VALUES = "foo, bar";
+                  public static final String DEFAULT = "bar";
+              }
+              """
+          ),
+          //language=java
+          java(
+            """
+              import com.example.Constants;
+              import io.swagger.annotations.ApiParam;
+
+              class Example {
+                @ApiParam(name = "foo", value = "Foo Object", allowableValues = Constants.VALUES, required = false, defaultValue = Constants.DEFAULT)
+                private Integer foo;
+              }
+              """,
+            """
+              import com.example.Constants;
+              import io.swagger.v3.oas.annotations.Parameter;
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              class Example {
+                @Parameter(name = "foo", description = "Foo Object", required = false, schema = @Schema(allowableValues = Constants.VALUES, defaultValue = Constants.DEFAULT))
+                private Integer foo;
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateSwaggerDefinitionsToOpenAPIDefinitionWithConstants() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              package com.example;
+
+              public class Constants {
+                  public static final String HOST = "example.com";
+                  public static final String BASE_PATH = "/api";
+              }
+              """
+          ),
+          //language=java
+          java(
+            """
+              import com.example.Constants;
+              import io.swagger.annotations.Info;
+              import io.swagger.annotations.SwaggerDefinition;
+
+              @SwaggerDefinition(
+                basePath = Constants.BASE_PATH,
+                host = Constants.HOST,
+                info = @Info(title = "Example", version = "V1.0"),
+                schemes = { SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS })
+              class Example {
+              }
+              """,
+            """
+              import com.example.Constants;
+              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+              import io.swagger.v3.oas.annotations.info.Info;
+              import io.swagger.v3.oas.annotations.servers.Server;
+
+              @OpenAPIDefinition(
+                      servers = {
+                              @Server(url = "http://" + Constants.HOST + Constants.BASE_PATH),
+                              @Server(url = "https://" + Constants.HOST + Constants.BASE_PATH)
+                      },
+                      info = @Info(title = "Example", version = "V1.0")
+              )
+              class Example {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void migrateSwaggerDefinitionsToOpenAPIDefinitionWithConstantHost() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              package com.example;
+
+              public class Constants {
+                  public static final String HOST = "example.com";
+              }
+              """
+          ),
+          //language=java
+          java(
+            """
+              import com.example.Constants;
+              import io.swagger.annotations.Info;
+              import io.swagger.annotations.SwaggerDefinition;
+
+              @SwaggerDefinition(
+                basePath = "/api",
+                host = Constants.HOST,
+                info = @Info(title = "Example", version = "V1.0"),
+                schemes = SwaggerDefinition.Scheme.HTTPS
+              )
+              class Example {
+              }
+              """,
+            """
+              import com.example.Constants;
+              import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+              import io.swagger.v3.oas.annotations.info.Info;
+              import io.swagger.v3.oas.annotations.servers.Server;
+
+              @OpenAPIDefinition(
+                      servers = {
+                              @Server(url = "https://" + Constants.HOST + "/api")
+                      },
+                      info = @Info(title = "Example", version = "V1.0")
+              )
+              class Example {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void migrateSwaggerDefinitionsToOpenAPIDefinitionSingleSchema() {
         rewriteRun(
           //language=java
