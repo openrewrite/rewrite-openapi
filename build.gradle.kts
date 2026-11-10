@@ -15,8 +15,6 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-test")
     testImplementation("org.openrewrite:rewrite-gradle")
     testImplementation("org.openrewrite:rewrite-maven")
-
-    testRuntimeOnly("org.gradle:gradle-tooling-api:latest.release")
 }
 
 recipeDependencies {
