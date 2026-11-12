@@ -16,19 +16,19 @@
 package org.openrewrite.openapi.swagger;
 
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
-import org.openrewrite.java.tree.Expression;
-import org.openrewrite.java.tree.J;
-import org.openrewrite.java.tree.JavaType;
-import org.openrewrite.java.tree.Space;
+import org.openrewrite.java.tree.*;
+import org.openrewrite.marker.Markers;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.emptyList;
 import static org.openrewrite.openapi.swagger.AnnotationUtils.extractArgumentAssignments;
 
 public class MigrateApiModelToSchema extends Recipe {
@@ -59,6 +59,10 @@ public class MigrateApiModelToSchema extends Recipe {
                             doAfterVisit(new ChangeType(API_MODEL_FQN, SCHEMA_FQN, true).getVisitor());
 
                             Map<String, J.Assignment> annotationAssignments = extractArgumentAssignments(annotation);
+                            J.Assignment positionalValue = positionalValue(annotation);
+                            if (positionalValue != null) {
+                                annotationAssignments.put("value", positionalValue);
+                            }
                             if (annotationAssignments.containsKey("value")) {
                                 J.Assignment value = annotationAssignments.remove("value");
                                 J.Identifier name = ((J.Identifier) value.getVariable()).withSimpleName("name");
@@ -78,6 +82,22 @@ public class MigrateApiModelToSchema extends Recipe {
                     }
 
                     return annotation;
+                }
+
+                private J.@Nullable Assignment positionalValue(J.Annotation annotation) {
+                    List<Expression> arguments = annotation.getArguments();
+                    if (arguments == null || arguments.size() != 1 ||
+                            arguments.get(0) instanceof J.Assignment || arguments.get(0) instanceof J.Empty) {
+                        return null;
+                    }
+                    Expression value = arguments.get(0);
+                    JavaType.Method valueMethod = TypeUtils.findDeclaredMethod(
+                            TypeUtils.asFullyQualified(annotation.getType()), "value", emptyList()).orElse(null);
+                    J.Identifier name = new J.Identifier(Tree.randomId(), Space.EMPTY, Markers.EMPTY, emptyList(),
+                            "value", valueMethod, null);
+                    return new J.Assignment(Tree.randomId(), value.getPrefix().withWhitespace(" "), Markers.EMPTY, name,
+                            new JLeftPadded<>(Space.SINGLE_SPACE, value.withPrefix(Space.SINGLE_SPACE), Markers.EMPTY),
+                            value.getType());
                 }
 
                 /**
@@ -130,7 +150,10 @@ public class MigrateApiModelToSchema extends Recipe {
                         if (SCHEMA_MATCHER.matches(annotation)) {
                             AnnotationUtils.extractArgumentAssignedExpressions(annotation).keySet().forEach(annotationAssignments::remove);
                             if (!annotationAssignments.isEmpty()) {
-                                return autoFormat(annotation.withArguments(ListUtils.concatAll(annotation.getArguments(), new ArrayList<>(annotationAssignments.values()))), ctx);
+                                List<Expression> arguments = ListUtils.concatAll(
+                                        ListUtils.map(annotation.getArguments(), a -> a instanceof J.Empty ? null : a),
+                                        new ArrayList<>(annotationAssignments.values()));
+                                return autoFormat(annotation.withArguments(arguments), ctx);
                             }
                         }
                         return annotation;

@@ -93,6 +93,56 @@ class MigrateApiModelToSchemaTest implements RewriteTest {
     }
 
     @Test
+    void shouldMergePositionalValueWithExistingAnnotation() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+              import io.swagger.annotations.ApiModel;
+
+              @ApiModel(/* public name */ "ApiModelExampleValue")
+              @Schema(description="ApiModelExampleDescription")
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              @Schema(description = "ApiModelExampleDescription", /* public name */ name = "ApiModelExampleValue")
+              class Example {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
+    void shouldMergeIntoExistingAnnotationWithoutArguments() {
+        rewriteRun(
+          //language=java
+          java(
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+              import io.swagger.annotations.ApiModel;
+
+              @ApiModel("ApiModelExampleValue")
+              @Schema()
+              class Example {
+              }
+              """,
+            """
+              import io.swagger.v3.oas.annotations.media.Schema;
+
+              @Schema(name = "ApiModelExampleValue")
+              class Example {
+              }
+              """
+          )
+        );
+    }
+
+    @Test
     void shouldPreferExistingAnnotationValue() {
         rewriteRun(
           //language=java
