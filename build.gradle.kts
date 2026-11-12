@@ -23,3 +23,8 @@ recipeDependencies {
     testParserClasspath("io.swagger:swagger-annotations:1.6.13")
     testParserClasspath("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
 }
+
+tasks.withType<Test>().configureEach {
+    // Fails a test whose recipe gives the code it writes other types than a parser gives that code
+    systemProperty("org.openrewrite.test.parserTypedTrees", true)
+}

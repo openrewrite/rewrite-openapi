@@ -22,6 +22,7 @@ import org.openrewrite.java.*;
 import org.openrewrite.java.search.UsesType;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.Space;
 
 import java.util.ArrayList;
@@ -60,7 +61,11 @@ public class MigrateApiModelToSchema extends Recipe {
                             Map<String, J.Assignment> annotationAssignments = extractArgumentAssignments(annotation);
                             if (annotationAssignments.containsKey("value")) {
                                 J.Assignment value = annotationAssignments.remove("value");
-                                annotationAssignments.put("name", value.withVariable(((J.Identifier) value.getVariable()).withSimpleName("name")));
+                                J.Identifier name = ((J.Identifier) value.getVariable()).withSimpleName("name");
+                                if (name.getType() instanceof JavaType.Method) {
+                                    name = name.withType(((JavaType.Method) name.getType()).withName("name"));
+                                }
+                                annotationAssignments.put("name", value.withVariable(name));
                             }
 
                             // Handle 'reference' attribute migration
