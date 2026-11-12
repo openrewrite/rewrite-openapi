@@ -35,7 +35,7 @@ class SwaggerToOpenAPITest implements RewriteTest {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.SwaggerToOpenAPI")
           .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1", "jakarta.ws.rs-api-3"))
           .afterParser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(),
-            "swagger-annotations-1", "swagger-annotations-2", "jakarta.ws.rs-api-3"));
+            "swagger-annotations-2", "jakarta.ws.rs-api-3"));
     }
 
     @DocumentExample

@@ -29,7 +29,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses")
           .parser(parser("swagger-annotations-1"))
-          .afterParser(parser("swagger-annotations-1", "swagger-annotations-2"));
+          .afterParser(parser("swagger-annotations-2"));
     }
 
     private static JavaParser.Builder<?, ?> parser(String... classpath) {
