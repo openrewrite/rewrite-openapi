@@ -29,7 +29,9 @@ class MigrateApiToTagTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new MigrateApiToTag())
-          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1"));
+          .parser(JavaParser.fromJavaVersion().classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1"))
+          .afterParser(JavaParser.fromJavaVersion()
+            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1", "swagger-annotations-2"));
     }
 
     @DocumentExample

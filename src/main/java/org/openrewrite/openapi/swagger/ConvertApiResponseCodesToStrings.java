@@ -146,7 +146,15 @@ public class ConvertApiResponseCodesToStrings extends ScanningRecipe<ConvertApiR
                                 null,
                                 JavaType.Primitive.String
                         );
+                        Expression name = assignment.getVariable();
+                        if (name.getType() instanceof JavaType.Method &&
+                            !TypeUtils.isString(((JavaType.Method) name.getType()).getReturnType())) {
+                            // On an annotation renamed from Swagger 1's, responseCode() returns int as code() did
+                            name = name.withType(((JavaType.Method) name.getType())
+                                    .withReturnType(JavaType.ShallowClass.build("java.lang.String")));
+                        }
                         return assignment
+                                .withVariable(name)
                                 .withType(JavaType.Primitive.String)
                                 .withAssignment(stringLiteral);
                     }
