@@ -28,15 +28,19 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipeFromResources("org.openrewrite.openapi.swagger.MigrateApiResponsesToApiResponses")
-          .parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-1")
-            .dependsOn(
-              """
-                package org.springframework.http;
-                public class ResponseEntity<T> {}
-                """,
-              "class User {}"
-            )
+          .parser(parser("swagger-annotations-1"))
+          .afterParser(parser("swagger-annotations-2"));
+    }
+
+    private static JavaParser.Builder<?, ?> parser(String... classpath) {
+        return JavaParser.fromJavaVersion()
+          .classpathFromResources(new InMemoryExecutionContext(), classpath)
+          .dependsOn(
+            """
+              package org.springframework.http;
+              public class ResponseEntity<T> {}
+              """,
+            "class User {}"
           );
     }
 
@@ -189,16 +193,7 @@ class MigrateApiResponsesToApiResponsesTest implements RewriteTest {
     @Test
     void noChangeOnAlreadyConverted() {
         rewriteRun(
-          spec -> spec.parser(JavaParser.fromJavaVersion()
-            .classpathFromResources(new InMemoryExecutionContext(), "swagger-annotations-2")
-            .dependsOn(
-              """
-                package org.springframework.http;
-                public class ResponseEntity<T> {}
-                """,
-              "class User {}"
-            )
-          ),
+          spec -> spec.parser(parser("swagger-annotations-2")),
           //language=java
           java(
             """
