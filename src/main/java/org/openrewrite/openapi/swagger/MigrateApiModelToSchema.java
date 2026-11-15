@@ -151,7 +151,7 @@ public class MigrateApiModelToSchema extends Recipe {
                             AnnotationUtils.extractArgumentAssignedExpressions(annotation).keySet().forEach(annotationAssignments::remove);
                             if (!annotationAssignments.isEmpty()) {
                                 List<Expression> arguments = ListUtils.concatAll(
-                                        ListUtils.map(annotation.getArguments(), a -> a instanceof J.Empty ? null : a),
+                                        ListUtils.filter(annotation.getArguments(), a -> !(a instanceof J.Empty)),
                                         new ArrayList<>(annotationAssignments.values()));
                                 return autoFormat(annotation.withArguments(arguments), ctx);
                             }
