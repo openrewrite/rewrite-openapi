@@ -127,6 +127,8 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
     void convertExternalConstantFieldAccess() {
         //language=java
         rewriteRun(
+          // The annotation attribute is a String but the constant is an int, so the field access cannot be attributed
+          spec -> spec.typeValidationOptions(TypeValidation.all().identifiers(false)),
           java(
             """
               package com.example;
@@ -204,6 +206,8 @@ class ConvertApiResponseCodesToStringsTest implements RewriteTest {
     void convertNestedClassConstantFieldAccess() {
         //language=java
         rewriteRun(
+          // The annotation attribute is a String but the constant is an int, so the field access cannot be attributed
+          spec -> spec.typeValidationOptions(TypeValidation.all().identifiers(false)),
           java(
             """
               package com.example;
