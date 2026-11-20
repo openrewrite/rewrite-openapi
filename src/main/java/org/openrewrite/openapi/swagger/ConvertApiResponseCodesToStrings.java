@@ -22,6 +22,7 @@ import org.jspecify.annotations.Nullable;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Preconditions;
 import org.openrewrite.ScanningRecipe;
+import org.openrewrite.Tree;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.AnnotationMatcher;
@@ -31,6 +32,7 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
+import org.openrewrite.marker.Markers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -138,9 +140,9 @@ public class ConvertApiResponseCodesToStrings extends ScanningRecipe<ConvertApiR
 
                     private J.Assignment convertToStringLiteral(J.Assignment assignment, String value) {
                         J.Literal stringLiteral = new J.Literal(
-                                org.openrewrite.Tree.randomId(),
+                                Tree.randomId(),
                                 assignment.getAssignment().getPrefix(),
-                                org.openrewrite.marker.Markers.EMPTY,
+                                Markers.EMPTY,
                                 value,
                                 "\"" + value + "\"",
                                 null,
